@@ -60,3 +60,22 @@ def plot_data(path, region, scale='log'):
     ax.imshow(m, cmap='OrRd', vmin=0, vmax=m.max(), interpolation ='none', 
               origin ='upper')
     plt.show()
+
+class Hicmat:
+    def __init__(self, path, resolution):
+        m = np.load(path)
+        self.resolution = resolution
+        self.original_matrix = m
+        self.filter_coords = None
+        self.reduced_matrix = None
+
+    def filter(self, threshold = 0):
+        if self.filter_coords is not None or self.reduced_matrix is not None:
+            logging.info('Matrix already filtered')
+            return
+        sum_row_col = self.original_matrix.sum(axis=0) + self.original_matrix.sum(axis=1)
+        reduced_idx = np.where(sum_row_col <= threshold)
+        self.reduced_matrix = self.original_matrix.copy()
+        self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=0)
+        self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=1)
+

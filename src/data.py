@@ -14,7 +14,6 @@ def load_hic(path, resolution):
 
     # Create square matrix
     matrix = np.zeros((max_index+1, max_index+1), dtype=int)
-    matrix_bis = np.zeros((max_index+1, max_index+1), dtype=int)
 
     def set_score(matrix, line):
         i,j,score = line.strip().split('\t')
@@ -38,9 +37,12 @@ def preprocess_data(folder, resolution):
     logging.info('===================================================================================')
     logging.info('\tPreprocessing of folder {} started...'.format(folder))
     for f in os.listdir(folder):
-        m = load_hic(os.path.join(folder, f), resolution=resolution)
-        np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
-        logging.info('Preprocessing: file {} preprocessed'.format(f))
+        if f.endswith('.RAWobserved'):
+            m = load_hic(os.path.join(folder, f), resolution=resolution)
+            np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
+            logging.info('Preprocessing: file {} preprocessed'.format(f))
+        else:
+            logging.info('Preprocessing: file {} skipped'.format(f))
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 
 # TODO: Move it to a notebook
@@ -49,6 +51,9 @@ def plot_data(path, region, scale='log'):
     if type(region) is tuple:
         # Subset of the file - zoom on a region
         m = m[region[0]:region[1], region[0]:region[1]]
+        Vmax = m.max()/np.log10((region[1]-region[0])/10)
+    else:
+        Vmax = m.max()/np.log10(len(m)/10)
     fig, ax = plt.subplots()
     if scale == 'log':
         m = np.log(m)

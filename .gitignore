@@ -225,4 +225,4 @@ __pycache__/
 __pycache__/*.*
 
 # datasets
-data/
+data/HiC/

@@ -75,7 +75,7 @@ class Hicmat:
             logging.info('Matrix already filtered')
             return
         sum_row_col = self.original_matrix.sum(axis=0) + self.original_matrix.sum(axis=1)
-        reduced_idx = np.where(sum_row_col <= threshold)
+        reduced_idx = np.where(sum_row_col <= (threshold*(self.original_matrix.shape[0]+self.original_matrix.shape[1])) )
         self.reduced_matrix = self.original_matrix.copy()
         self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=0)
         self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=1)

@@ -46,8 +46,9 @@ def preprocess_data(folder, resolution):
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 
 # TODO: Move it to a notebook
-def plot_data(path, region, scale='log'):
-    m = np.load(path)
+def plot_data(m, region=None, scale='log'):
+    if scale == 'log':
+        m = np.log(m)
     if type(region) is tuple:
         # Subset of the file - zoom on a region
         m = m[region[0]:region[1], region[0]:region[1]]
@@ -55,10 +56,10 @@ def plot_data(path, region, scale='log'):
     else:
         Vmax = m.max()/np.log10(len(m)/10)
     fig, ax = plt.subplots()
-    if scale == 'log':
-        m = np.log(m)
-    ax.imshow(m, cmap='OrRd', vmin=0, vmax=m.max(), interpolation ='none', 
+    shw = ax.imshow(m, cmap='OrRd', vmin=0, vmax=Vmax, interpolation ='none', 
               origin ='upper')
+    bar = plt.colorbar(shw)
+    bar.set_label('Scale')
     plt.show()
 
 class Hicmat:

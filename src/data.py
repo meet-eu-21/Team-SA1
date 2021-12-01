@@ -65,6 +65,8 @@ def plot_data(m, region=None, scale='log'):
 class Hicmat:
     def __init__(self, path, resolution):
         m = np.load(path)
+        if m.shape[0] != m.shape[1]:
+            raise ValueError('Matrix is not square')
         self.resolution = resolution
         self.original_matrix = m
         self.filter_coords = None

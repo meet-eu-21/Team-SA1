@@ -51,12 +51,12 @@ def plot_data(path, region=None, scale='log'):
     fig, ax = plt.subplots()
     if scale == 'log':
         m = np.log(m)
-    Vmax = m.max()/np.log10(len(m)/10)
+    Vmax = m.max()/(len(m)/1500)
     if type(region) is tuple:
         # Subset of the file - zoom on a region
         m = m[region[0]:region[1]+1, region[0]:region[1]+1]
-        Vmax = m.max()/np.log10((region[1]-region[0])/10)
-    ax.imshow(m, cmap='jet', vmin=0, vmax=min(Vmax, m.max()), interpolation ='none', 
+        #Vmax = m.max()/((region[1]-region[0])/1500)
+    ax.imshow(m, cmap='YlOrRd', vmin=0, vmax=min(Vmax, m.max()), interpolation ='none', 
               origin ='lower')
     plt.show()
 
@@ -96,13 +96,14 @@ def found_TADs(path, window):
 def display_TADs(path, list_TADs):
     mat = np.log(np.load(path))
     fig, ax = plt.subplots()
-    Vmax = mat.max()/np.log10(len(mat)/10)
-    ax.imshow(mat, cmap='jet', vmin=0, vmax=min(Vmax, mat.max()), interpolation ='none', 
+    print(mat.max())
+    Vmax = mat.max()/(len(mat)/1500)
+    ax.imshow(mat, cmap='YlOrRd', vmin=0, vmax=min(Vmax, mat.max()), interpolation ='none', 
               origin ='lower')
     for tad in list_TADs:
         ax.add_patch(patches.Rectangle((tad[0], tad[0]), 
                                        tad[1]-tad[0], 
                                        tad[1]-tad[0], 
                                        fill=False,
-                                       edgecolor='black'))
+                                       edgecolor='green'))
     plt.show()

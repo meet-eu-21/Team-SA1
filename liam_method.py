@@ -40,6 +40,7 @@ def preprocess_data(folder, resolution):
     for f in os.listdir(folder):
         m = load_hic(os.path.join(folder, f), resolution)
         np.save(os.path.join(folder, f.replace(".RAWobserved.txt",".npy")), m)
+        np.savetxt(os.path.join(folder, f.replace(".RAWobserved.txt",".txt")), m, delimiter=' ', fmt='%d')
         logging.info('Preprocessing: file {} preprocessed'.format(f))
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 

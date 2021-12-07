@@ -201,7 +201,9 @@ def getforest(score,height,T_lim,t_lim,min_size):
 	totalscore = np.zeros((L,T_lim))
 	traceback_k = np.zeros((L,T_lim),dtype=int)
 	traceback_t = np.zeros((L,T_lim),dtype=int)
+	print(min_size, L)
 	for i in range(min_size,L):
+		print(i)
 		for t in range(1,T_lim):
 			options = np.zeros((i+1,t))
 			options[0,0] = totalscore[i-1,t]
@@ -289,9 +291,7 @@ for i,chr in enumerate(chrs):
 		os.system('mkdir ' + output_directory + '/' + chr)
 	duplicates_out = ['\t'.join(['name','proportion_duplicates'])]
 
-	print(T_lim)
 	for start_t in range(1,T_lim):
-		print(start)
 		trees = foresttb(totalscore,traceback_k, traceback_t,start_t)
 		allints = []
 

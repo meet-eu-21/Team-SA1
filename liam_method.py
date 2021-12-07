@@ -107,3 +107,11 @@ def display_TADs(path, list_TADs):
                                        fill=False,
                                        edgecolor='green'))
     plt.show()
+
+def read_arrowhead_result(path, chromosome, resolution):
+    df = pd.read_csv(path, sep='\t')
+    df = df[df['chr1']==chromosome]
+    list_tads = []
+    for i in range(len(df)):
+        list_tads.append((int(df['x1'][i]/resolution), int(df['x2'][i]/resolution)))
+    return list_tads

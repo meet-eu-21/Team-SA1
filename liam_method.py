@@ -108,7 +108,7 @@ def found_TADs(path, window):
     TADs_reverse = []
     for tad in get_TADs(mat[::-1, ::-1], window):
         TADs_reverse.append((len(mat)-tad[1], len(mat)-tad[0]))
-    list_all_TADs = get_TADs(mat) + TADs_reverse
+    list_all_TADs = get_TADs(mat, window) + TADs_reverse
     return mat, list_all_TADs
 
 # display the contact map with the associated TADs delimited

@@ -137,3 +137,18 @@ def read_arrowhead_result(path, chromosome, resolution):
     for i in range(len(df)):
         list_tads.append((int(df['x1'][i]/resolution), int(df['x2'][i]/resolution)))
     return list_tads
+
+# execute TADtree
+def do_TADtree(path_to_TADtree, contact_map_paths, contact_map_names, S=30, M=10, p=3, q=12, gamma=500, N=400, output='./output'):
+    # construct the controle file (conatining parameters of TADtree)
+    controle_file = open('control_file.txt', 'w')
+    controle_file.write('S = '+str(S)+'\nM = '+str(M)+'\np = '+str(p)+'\nq = '+str(q)+'\ngamma = '+str(gamma)+'\n\ncontact_map_path = '+contact_map_paths[0])
+    for i in range(1, len(contact_map_paths)):
+        controle_file.write(','+contact_map_paths[i])
+    controle_file.write('\ncontact_map_names = '+contact_map_names[0])
+    for i in range(1, len(contact_map_names)):
+        controle_file.write(','+contact_map_names[i])
+    controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+output)
+    controle_file.close()
+    # apply the command line
+    os.system('python '+path_to_TADtree+' control_file.txt')

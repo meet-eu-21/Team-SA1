@@ -54,10 +54,25 @@ def plot_data(path, region=None, scale='log'):
     Vmax = m.max()/(len(m)/1500)
     if type(region) is tuple:
         # Subset of the file - zoom on a region
-        m = m[region[0]:region[1]+1, region[0]:region[1]+1]
-        #Vmax = m.max()/((region[1]-region[0])/1500)
+        if max(0, region[0]-20)==0:
+            start = region[0]
+            end = region[1]+21-region[0]
+        elif min(len(m), region[1]+21)==len(m):
+            start = 20
+            end = len(m)-region[0]
+        else:
+            start = 20
+            end = region[1]+21-region[0]
+        m = m[max(0, region[0]-20):min(len(m), region[1]+21), max(0, region[0]-20):min(len(m), region[1]+21)]
+        Vmax = m.max()
     ax.imshow(m, cmap='YlOrRd', vmin=0, vmax=min(Vmax, m.max()), interpolation ='none', 
               origin ='lower')
+    if type(region) is tuple:
+        ax.add_patch(patches.Rectangle((start, start), 
+                                        end-start, 
+                                        end-start, 
+                                        fill=False,
+                                        edgecolor='green'))
     plt.show()
 
 def found_TADs(path, window):

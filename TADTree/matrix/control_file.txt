@@ -1,0 +1,11 @@
+S = 30
+M = 10
+p = 3
+q = 12
+gamma = 500
+
+contact_map_path = matrix/chr1_100kb.txt
+contact_map_name = chr1
+N = 400
+
+output_directory = ./output

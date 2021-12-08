@@ -167,4 +167,4 @@ def do_TADtree(path_to_TADtree, path_to_matrix, contact_map_paths, contact_map_n
     controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+output)
     controle_file.close()
     # apply the command line
-    os.system('python '+path_to_TADtree+' '+path_to_matrix+'\control_file.txt')
+    os.system('python '+path_to_TADtree+' '+path_to_matrix+'/control_file.txt')

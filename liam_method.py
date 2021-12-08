@@ -82,11 +82,11 @@ def plot_data(path, region=None, scale='log'):
     plt.show()
 
 # arbitrary method to find TADs of an HiC file, size of sliding windows necessary (=size minimum of a TAD)
-def found_TADs(path, window):
+def found_TADs(path, window, max_size):
     mat = np.log(np.load(path))
     mat[mat=='-inf'] = 0
     # method to find TADs in a sens of lecture (no overlaps)
-    def get_TADs(mat, window):
+    def get_TADs(mat, window, max_size):
         list_TADs = []
         n = len(mat)
         tad = False
@@ -95,7 +95,7 @@ def found_TADs(path, window):
             square = mat[i:i+window, i:i+window]
             tad_square = square.copy()
             k = 0
-            while np.quantile(tad_square, 0.2)>3 and not tad and i+k<n-window:
+            while np.quantile(tad_square, 0.2)>3 and not tad and i+k<n-window and k+window<max_size:
                 tad_square = mat[i:i+window+k, i:i+window+k]
                 k+=1
             # to enlarge the TAD size
@@ -108,9 +108,9 @@ def found_TADs(path, window):
         return list_TADs
     # apply 'get_TADs' in both directions
     TADs_reverse = []
-    for tad in get_TADs(mat[::-1, ::-1], window):
+    for tad in get_TADs(mat[::-1, ::-1], window, max_size):
         TADs_reverse.append((len(mat)-tad[1], len(mat)-tad[0]))
-    list_all_TADs = get_TADs(mat, window) + TADs_reverse
+    list_all_TADs = get_TADs(mat, window, max_size) + TADs_reverse
     return mat, list_all_TADs
 
 # display the contact map with the associated TADs delimited
@@ -152,4 +152,4 @@ def do_TADtree(path_to_TADtree, path_to_matrix, contact_map_paths, contact_map_n
     controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+output)
     controle_file.close()
     # apply the command line
-    os.system('python '+path_to_TADtree+' '+path_to_matrix+'/control_file.txt')
+    os.system('python '+path_to_TADtree+' '+path_to_matrix+'\control_file.txt')

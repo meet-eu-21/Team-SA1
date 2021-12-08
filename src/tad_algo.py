@@ -1,19 +1,23 @@
 import numpy as np
 import pandas as pd
 import os, time, logging
+from sklearn.preprocessing import scale
+from scipy import stats
+from scipy.stats import ranksums
 
 from abc import ABC, abstractmethod
 
 class TADsDetector(ABC):
     @abstractmethod
-    def runAlgo(self):
+    def runAlgo(self, hic_obj):
         pass
 
 class TopDom(TADsDetector):
-    def runAlgo(self):
+    def runAlgo(self, hic_obj):
         pass
 
     def TopDomStep1(self, matrix, window):
+        print("TopDom Step 1 : Generating binSignals by computing bin-level contact frequencies")
         nbins = matrix.shape[0]
         binsignal = np.zeros(nbins)
         for i in range(nbins):
@@ -22,21 +26,83 @@ class TopDom(TADsDetector):
             # upperbound = min( i+size, n_bins)
             # mat.data[lowerbound:i, (i+1):upperbound]
 
-            lowerbound = np.maximum(0, i-window)
-            upperbound = np.minimum(nbins-1, i+window-1) # TODO: Check if this is correct
-            diamond = matrix[lowerbound:i, i:upperbound]
-            binsignal[i] = np.mean(diamond)
+            if i == 0 or i == nbins-1:
+                binsignal[i] = 0
+            else: 
+                lowerbound = np.maximum(0, i-window)
+                upperbound = np.minimum(nbins, i+window)
+                diamond = matrix[lowerbound:i, i:upperbound]
+                binsignal[i] = np.mean(diamond)
         return binsignal
 
-    def TopDomStep2(self, binsignal, window):
-        # TODO: Review the step 2 to fit curve before capturing local minimas
+    def findLocalExtremums(self, binsignal, window):
         binextremums = np.zeros(len(binsignal))
         for i in range(len(binsignal)):
-            if binsignal[i] == np.minimum(binsignal[i-window:i+window]):
+            lowerbound = np.maximum(0, i-window)
+            upperbound = np.minimum(len(binsignal), i+window)
+            if binsignal[i] == np.amin(binsignal[lowerbound:upperbound]):
                 binextremums[i] = -1
-            elif binsignal[i] == np.maximum(binsignal[i-window:i+window]):
+            elif binsignal[i] == np.amax(binsignal[lowerbound:upperbound]):
                 binextremums[i] = 1
         # np.where(np.array(binextremums) == -1) to find index of local minima
         return binextremums
 
-    def TopDomStep3(self, binextremums, window):
+    def TopDomStep2(self, regions, binsignal, window):
+        # TODO: Review the step 2 to fit curve before capturing local minimas
+        print("TopDom Step 2 : Detect TD boundaries based on binSignals")
+        binextremums = np.zeros(len(binsignal))
+        for start,end in regions:
+            binextremums[start:end] = self.findLocalExtremums(binsignal[start:end], window)
+        return binextremums
+        
+
+    def getFlattenDiamond(matrix, i, window):
+        n_bins = matrix.shape[0]
+        new_matrix = np.zeros((window, window))
+        for k in range(window):
+            if i-(k-1) >= 1 and i < n_bins:
+                # print("\n")
+                lower = min(i, n_bins-1)
+                upper = max(i+window, n_bins-1)
+                # print(lower)
+                # print(upper)
+                # print("R - {}, 1:{}     {},{}:{}".format(window-(k), (upper-lower+1), i-(k), lower, upper))
+                # print("Py - {}, 0:{}     {},{}:{}".format(window-(k), (upper-lower), i-(k), lower, upper))
+                # print(new_matrix[window-k-1, 0:(upper-lower)])
+                # print(matrix[i-k-1, lower:upper])
+                new_matrix[window-k-1, 0:(upper-lower)] = matrix[i-k-1, lower:upper]
+        return new_matrix.flatten()
+
+    def getUpstream(matrix, i, window):
+        n_bins = matrix.shape[0]
+        lower = max(0, i-window)
+        new_matrix = matrix[lower:i, lower:i]
+        return new_matrix[np.triu_indices(new_matrix.shape[0], k=1)]
+
+    def getDownstream(matrix, i, window):
+        n_bins = matrix.shape[0]
+        upper = min(n_bins, i+window)
+        new_matrix = matrix[i:upper, i:upper]
+        return new_matrix[np.triu_indices(new_matrix.shape[0], k=1)]
+
+    # Pass the submatrix as argument
+    def getPValue(self, matrix, window, scale=1):
+        pvalues = np.array([])
+        n_bins = matrix.shape[0]
+        for i in range(n_bins):
+            diamond = self.getFlattenDiamond(matrix, i, window)
+            up = self.getUpstream(matrix, i, window)
+            down = self.getDownstream(matrix, i, window)
+            # Compare by Wilcox Ranksum Test
+            pvalues[i] = ranksums(diamond*scale, np.concatenate((up, down)), alternative = 'less').pvalue
+        pvalues[np.isnan(pvalues)] = 1
+        return pvalues
+
+    def TopDomStep3(self, matrix, regions, binextremums, window):
+        print("TopDom Step 3 : Statistical Filtering of false positive TD boundaries")
+        # TODO: Scale matrix before?
+        pvalues = np.ones(len(binextremums))
+        for start,end in regions:
+            pvalues[start:end] = self.getPValue(matrix[start:end, start:end], window, scale=1)
+        binextremums = np.where(binextremums == -1 and pvalues > 0.05, -2, binextremums)
+        return binextremums

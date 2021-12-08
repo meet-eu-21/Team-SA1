@@ -130,6 +130,21 @@ def display_TADs(path, list_TADs):
                                        fill=False,
                                        edgecolor='green'))
     plt.show()
+    for i in range(10):
+        print(i)
+        zone = (i*int(len(mat)/10), (i+1)*int(len(mat)/10))
+        m = mat[zone[0]:zone[1], zone[0]:zone[1]]
+        fig, ax = plt.subplots()
+        ax.imshow(m, cmap='YlOrRd', vmin=0, vmax=min(Vmax, mat.max()), interpolation ='none', 
+              origin ='lower')
+        for tad in list_TADs:
+            if tad[1]>zone[0] or tad[0]<zone[1]:
+                ax.add_patch(patches.Rectangle((tad[0]-zone[0], tad[0]-zone[0]), 
+                                               tad[1]-tad[0], 
+                                               tad[1]-tad[0], 
+                                               fill=False,
+                                               edgecolor='green'))
+        plt.show()
 
 # load the available ArrowHead results
 def read_arrowhead_result(path, chromosome, resolution):

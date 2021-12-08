@@ -69,16 +69,29 @@ class Hicmat:
             raise ValueError('Matrix is not square')
         self.resolution = resolution
         self.original_matrix = m
-        self.filter_coords = None
+        self.filtered_coords = None
         self.reduced_matrix = None
+        self.regions = None
 
-    def filter(self, threshold = 0):
+    def filter(self, threshold = 0, min_length_region=5):
         if self.filter_coords is not None or self.reduced_matrix is not None:
             logging.info('Matrix already filtered')
             return
         sum_row_col = self.original_matrix.sum(axis=0) + self.original_matrix.sum(axis=1)
-        reduced_idx = np.where(sum_row_col <= (threshold*(self.original_matrix.shape[0]+self.original_matrix.shape[1])) )
+        self.filtered_coords = np.where(sum_row_col <= (threshold*(self.original_matrix.shape[0]+self.original_matrix.shape[1])) )[0]
+
+        self.regions = []
+        for i in range(len(self.filtered_coords)-1):
+            # Save indexes of regions
+            if self.filtered_coords[i+1] - self.filtered_coords[i] >= min_length_region:
+                self.regions.append((self.filtered_coords[i], self.filtered_coords[i+1]))
+
         self.reduced_matrix = self.original_matrix.copy()
-        self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=0)
-        self.reduced_matrix = np.delete(self.reduced_matrix, reduced_idx, axis=1)
+        self.reduced_matrix = np.delete(self.reduced_matrix, self.filtered_coords, axis=0)
+        self.reduced_matrix = np.delete(self.reduced_matrix, self.filtered_coords, axis=1)
+
+    def get_regions(self):
+        if self.regions is None:
+            raise ValueError('Matrix not filtered')
+        return self.regions
 

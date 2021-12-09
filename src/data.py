@@ -73,8 +73,8 @@ class Hicmat:
         self.reduced_matrix = None
         self.regions = None
 
-    def filter(self, threshold = 0, min_length_region=5):
-        if self.filter_coords is not None or self.reduced_matrix is not None:
+    def filter(self, threshold = 0, min_length_region=5): # TODO: Discuss about min_length_region
+        if self.filtered_coords is not None or self.reduced_matrix is not None:
             logging.info('Matrix already filtered')
             return
         sum_row_col = self.original_matrix.sum(axis=0) + self.original_matrix.sum(axis=1)

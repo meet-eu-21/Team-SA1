@@ -156,16 +156,20 @@ def read_arrowhead_result(path, chromosome, resolution):
     return list_tads
 
 def do_TADtree(path_to_TADtree, path_to_matrix, contact_map_paths, contact_map_names, S=30, M=10, p=3, q=12, gamma=500, N=400, output='./output'):
+    if not os.path.isdir(os.path.join(path_to_matrix, 'output')):
+        os.mkdir(os.path.join(path_to_matrix, 'output'))
     # construct the controle file (conatining parameters of TADtree)
     controle_file = open(path_to_matrix+'/control_file.txt', 'w')
     controle_file.write('S = '+str(S)+'\nM = '+str(M)+'\np = '+str(p)+'\nq = '+str(q)+'\ngamma = '+str(gamma)+'\n\ncontact_map_path = '+path_to_matrix+'/'+contact_map_paths[0])
     for i in range(1, len(contact_map_paths)):
         controle_file.write(','+path_to_matrix+'/'+contact_map_paths[i])
     controle_file.write('\ncontact_map_name = '+contact_map_names[0])
-    for i in range(1, len(contact_map_names)):
-        controle_file.write(','+contact_map_names[i])
+    for i in range(0, len(contact_map_names)):
+        if not os.path.isdir(os.path.join(path_to_matrix, 'output', contact_map_names[i])):
+            os.mkdir(os.path.join(path_to_matrix, 'output', contact_map_names[i]))
+        if i!=0:
+            controle_file.write(','+contact_map_names[i])
     controle_file.write('\nN = '+str(N)+'\n\noutput_directory = ./output')
     controle_file.close()
-    os.system('mkdir '+path_to_matrix+'\output')
     # apply the command line
     os.system('python '+path_to_TADtree+' '+path_to_matrix+'\control_file.txt')

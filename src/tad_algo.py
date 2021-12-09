@@ -9,15 +9,25 @@ from abc import ABC, abstractmethod
 
 class TADsDetector(ABC):
     @abstractmethod
-    def runAlgo(self, hic_obj):
+    def getTADs(self, hic_obj):
         pass
 
 class TopDom(TADsDetector):
-    def runAlgo(self, hic_obj, window=5):
-        binsignal = self.TopDomStep1(hic_obj.matrix, window)
+    def getTADs(self, hic_obj, window=5):
+        binsignal = self.TopDomStep1(hic_obj.original_matrix, window)
         binextremums = self.TopDomStep2(hic_obj.regions, binsignal, window)
-        binextremums = self.TopDomStep3(hic_obj.matrix, hic_obj.regions, binextremums, window)
-        pass
+        binextremums = self.TopDomStep3(hic_obj.original_matrix, hic_obj.regions, binextremums, window)
+        print('TopDom : Exporting TADs')
+        tads = []
+        for start,end in hic_obj.regions:
+            idx = np.where(binextremums[start:end] == -1)[0]
+            nb_minimas = (binextremums[start:end] == -1).sum()
+            if nb_minimas == 1:
+                pass
+            else:
+                for i in range(len(idx)-1):
+                    tads.append(((start+idx[i])*hic_obj.resolution, (start+idx[i+1])*hic_obj.resolution))
+        return tads
 
     def TopDomStep1(self, matrix, window):
         print("TopDom Step 1 : Generating binSignals by computing bin-level contact frequencies")

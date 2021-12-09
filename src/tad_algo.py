@@ -13,7 +13,10 @@ class TADsDetector(ABC):
         pass
 
 class TopDom(TADsDetector):
-    def runAlgo(self, hic_obj):
+    def runAlgo(self, hic_obj, window=5):
+        binsignal = self.TopDomStep1(hic_obj.matrix, window)
+        binextremums = self.TopDomStep2(hic_obj.regions, binsignal, window)
+        binextremums = self.TopDomStep3(hic_obj.matrix, hic_obj.regions, binextremums, window)
         pass
 
     def TopDomStep1(self, matrix, window):
@@ -56,14 +59,14 @@ class TopDom(TADsDetector):
         return binextremums
         
 
-    def getFlattenDiamond(matrix, i, window):
+    def getFlattenDiamond(self, matrix, i, window):
         n_bins = matrix.shape[0]
         new_matrix = np.zeros((window, window))
         for k in range(window):
             if i-(k-1) >= 1 and i < n_bins:
                 # print("\n")
                 lower = min(i, n_bins-1)
-                upper = max(i+window, n_bins-1)
+                upper = min(i+window, n_bins-1)
                 # print(lower)
                 # print(upper)
                 # print("R - {}, 1:{}     {},{}:{}".format(window-(k), (upper-lower+1), i-(k), lower, upper))
@@ -73,13 +76,13 @@ class TopDom(TADsDetector):
                 new_matrix[window-k-1, 0:(upper-lower)] = matrix[i-k-1, lower:upper]
         return new_matrix.flatten()
 
-    def getUpstream(matrix, i, window):
+    def getUpstream(self, matrix, i, window):
         n_bins = matrix.shape[0]
         lower = max(0, i-window)
         new_matrix = matrix[lower:i, lower:i]
         return new_matrix[np.triu_indices(new_matrix.shape[0], k=1)]
 
-    def getDownstream(matrix, i, window):
+    def getDownstream(self, matrix, i, window):
         n_bins = matrix.shape[0]
         upper = min(n_bins, i+window)
         new_matrix = matrix[i:upper, i:upper]
@@ -87,7 +90,7 @@ class TopDom(TADsDetector):
 
     # Pass the submatrix as argument
     def getPValue(self, matrix, window, scale=1):
-        pvalues = np.array([])
+        pvalues = np.ones(matrix.shape[0])
         n_bins = matrix.shape[0]
         for i in range(n_bins):
             diamond = self.getFlattenDiamond(matrix, i, window)
@@ -104,5 +107,6 @@ class TopDom(TADsDetector):
         pvalues = np.ones(len(binextremums))
         for start,end in regions:
             pvalues[start:end] = self.getPValue(matrix[start:end, start:end], window, scale=1)
-        binextremums = np.where(binextremums == -1 and pvalues > 0.05, -2, binextremums)
+        false_pos = (binextremums == -1) & (pvalues >= 0.05)
+        binextremums[false_pos] = -2
         return binextremums

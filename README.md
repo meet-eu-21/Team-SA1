@@ -1,7 +1,7 @@
 <h1 align="center"> Team-SA1 for TAD prediction <img src="https://img.icons8.com/color/48/000000/predcit.png"/> (algorithms, tools and methods) </h1>
 
 <h2 align="center"><img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> Meet-EU Team SA1: <img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> </h2>
-<h4 align="center">A. Marina, C. Simon, L. Liam, T. Alexis, Z. Yann </h4>
+<h4 align="center"><img src="https://img.icons8.com/color/48/000000/banana.png" width="20"/> A. Marina, C. Simon, L. Liam, T. Alexis, Z. Yann <img src="https://img.icons8.com/color/48/000000/banana.png" width="20"/></h4> 
 
 ## Background
 ### What is this?

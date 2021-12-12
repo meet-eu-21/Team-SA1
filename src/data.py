@@ -6,16 +6,18 @@ from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+# load an HiC file with his resolution and return a matrix in numpy format
 def load_hic(path, resolution):
+    # Get the number of rows and columns of the matrix
     df = pd.read_csv(path, sep="\t",header=None, names=["i","j","score"])
 
     max_index = int(max(max(df.i)/resolution, max(df.j)/resolution))
-
     del df
 
     # Create square matrix
     matrix = np.zeros((max_index+1, max_index+1), dtype=int)
 
+    # function that puts a value twice in the matrix
     def set_score(matrix, line):
         i,j,score = line.strip().split('\t')
         i = int(int(i)/resolution)
@@ -23,15 +25,14 @@ def load_hic(path, resolution):
         matrix[i,j] = int(float(score))
         matrix[j,i] = int(float(score))
 
-    
-
+    # fill the matrix
     f = open(path, 'r')
     lines = f.readlines()    
     for line in lines:
         set_score(matrix, line)
     return matrix
 
-
+# preprocess all the Hic files contained in a folder (with the same resolution)
 def preprocess_data(folder, resolution):
     start_time = time.time()
     logging.basicConfig(filename="data.log", level=logging.DEBUG)
@@ -40,26 +41,35 @@ def preprocess_data(folder, resolution):
     for f in os.listdir(folder):
         if f.endswith('.RAWobserved'):
             m = load_hic(os.path.join(folder, f), resolution=resolution)
+            # put the matrix in a numpy file
             np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
+            # put the matrix in a .txt (for TADtree)
+            np.savetxt(os.path.join(folder, f.replace(".RAWobserved",".txt")), m, delimiter=' ', fmt='%d')
             logging.info('Preprocessing: file {} preprocessed'.format(f))
         else:
             logging.info('Preprocessing: file {} skipped'.format(f))
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 
-# TODO: Move it to a notebook
+# plot a contact map of an HiC file, possibility to zoom on a zone and to delimite it 
 def plot_data(m, region=None, scale='log', tads=None, resolution=None):
+    dezoom = 5
     if scale == 'log':
         m = np.log(m)
+        Vmax = m.max()/np.log10(len(m)/10)
+        # TODO: find something for contrast diagonal / other
     if type(region) is tuple:
         # Subset of the file - zoom on a region
         if resolution is None:
             raise ValueError("Resolution must be specified for zoomed plots")
-        start = int(region[0]/resolution)
-        end = int(region[1]/resolution)
+        # dezoom a bit to highlight the region
+        # TODO: Check
+        start = min(int(region[0]-dezoom/resolution),0)
+        end = max(int(region[1]-dezoom/resolution),len(m)-1)
         m = m[start:end, start:end]
-        Vmax = m.max()/np.log10(len(m)/10)
+        # Vmax = m.max()/np.log10(len(m)/10)
     else:
-        Vmax = m.max()/np.log10(len(m)/10)
+        # Vmax = m.max()/np.log10(len(m)/10)
+        pass
     fig, ax = plt.subplots()
     shw = ax.imshow(m, cmap='OrRd', vmin=0, vmax=Vmax, interpolation ='none', 
               origin ='upper')
@@ -73,6 +83,13 @@ def plot_data(m, region=None, scale='log', tads=None, resolution=None):
             tad_length = (tad[1]-tad[0]) / resolution
             xy = (int(tad[0]/resolution), int(tad[0]/resolution))
             ax.add_patch(Rectangle(xy, tad_length, tad_length, fill=False, edgecolor='blue', linewidth=1))
+    if region is not None:
+        ax.add_patch(Rectangle((dezoom, dezoom), 
+                                len(m)-(dezoom*2),
+                                len(m)-(dezoom*2), 
+                                fill=False,
+                                edgecolor='black',
+                                linewidth=3))
     plt.show()
 
 class Hicmat:
@@ -85,6 +102,7 @@ class Hicmat:
         self.filtered_coords = None
         self.reduced_matrix = None
         self.regions = None
+        self.path = path
 
     def filter(self, threshold = 0, min_length_region=5): # TODO: Discuss about min_length_region
         if self.filtered_coords is not None or self.reduced_matrix is not None:
@@ -107,4 +125,7 @@ class Hicmat:
         if self.regions is None:
             raise ValueError('Matrix not filtered')
         return self.regions
+
+    def get_folder(self):
+        return os.path.dirname(self.path)
 

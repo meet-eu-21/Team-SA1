@@ -4,6 +4,7 @@ import pandas as pd
 import os, time, logging
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 def load_hic(path, resolution):
     df = pd.read_csv(path, sep="\t",header=None, names=["i","j","score"])
@@ -46,20 +47,32 @@ def preprocess_data(folder, resolution):
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 
 # TODO: Move it to a notebook
-def plot_data(m, region=None, scale='log'):
+def plot_data(m, region=None, scale='log', tads=None, resolution=None):
     if scale == 'log':
         m = np.log(m)
     if type(region) is tuple:
         # Subset of the file - zoom on a region
-        m = m[region[0]:region[1], region[0]:region[1]]
-        Vmax = m.max()/np.log10((region[1]-region[0])/10)
+        if resolution is None:
+            raise ValueError("Resolution must be specified for zoomed plots")
+        start = int(region[0]/resolution)
+        end = int(region[1]/resolution)
+        m = m[start:end, start:end]
+        Vmax = m.max()/np.log10(len(m)/10)
     else:
         Vmax = m.max()/np.log10(len(m)/10)
     fig, ax = plt.subplots()
     shw = ax.imshow(m, cmap='OrRd', vmin=0, vmax=Vmax, interpolation ='none', 
               origin ='upper')
+    
     bar = plt.colorbar(shw)
     bar.set_label('Scale')
+    if tads is not None:
+        if resolution is None:
+            raise Exception('Resolution is not specified')
+        for tad in tads:
+            tad_length = (tad[1]-tad[0]) / resolution
+            xy = (int(tad[0]/resolution), int(tad[0]/resolution))
+            ax.add_patch(Rectangle(xy, tad_length, tad_length, fill=False, edgecolor='blue', linewidth=1))
     plt.show()
 
 class Hicmat:

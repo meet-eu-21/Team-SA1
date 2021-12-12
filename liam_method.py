@@ -1,0 +1,175 @@
+import numpy as np
+import pandas as pd
+import os, time, logging
+from joblib import Parallel, delayed
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+
+# load an HiC file with his resolution and return a matrix in numpy format
+def load_hic(path, resolution):
+    # Get the number of rows and columns of the matrix
+    df = pd.read_csv(path, sep="\t",header=None, names=["i","j","score"])
+    max_index = int(max(max(df.i)/resolution, max(df.j)/resolution))
+    del df
+    # Create square matrix
+    matrix = np.zeros((max_index+1, max_index+1), dtype=int)
+    # function that puts a value twice in the matrix
+    def set_score(matrix, line):
+        i,j,score = line.strip().split('\t')
+        i = int(int(i)/resolution)
+        j = int(int(j)/resolution)
+        matrix[i,j] = int(float(score))
+        matrix[j,i] = int(float(score))
+    # fill the matrix
+    f = open(path, 'r')
+    lines = f.readlines()    
+    for line in lines:
+        set_score(matrix, line)
+    return matrix
+
+# preprocess all the Hic files contained in a folder (with the same resolution)
+def preprocess_data(folder, resolution):
+    start_time = time.time()
+    logging.basicConfig(filename="data.log", level=logging.DEBUG)
+    logging.info('===================================================================================')
+    logging.info('\tPreprocessing of folder {} started...'.format(folder))
+    #os.system('mkdir '+folder+'\numpy_files')
+    #os.system('mkdir '+folder+'\TADtree')
+    for f in os.listdir(folder):
+        m = load_hic(os.path.join(folder, f), resolution)
+        # put the matrix in a numpy file
+        np.save(os.path.join(folder, f.replace(".RAWobserved.txt",".npy")), m)
+        # put the matrix in a .txt (for TADtree)
+        np.savetxt(os.path.join(folder, f.replace(".RAWobserved.txt",".txt")), m, delimiter=' ', fmt='%d')
+        logging.info('Preprocessing: file {} preprocessed'.format(f))
+    logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
+
+# plot a contact map of an HiC file, possibility to zoom on a zone and to delimite it 
+def plot_data(path, region=None, scale='log'):
+    m = np.load(path)
+    fig, ax = plt.subplots()
+    if scale == 'log':
+        m = np.log(m)
+    # scale of color if we don't zoom
+    Vmax = m.max()/(len(m)/1500)
+    # case of zooming
+    if type(region) is tuple:
+        # find position of the rectangle which will delemite the zone
+        if max(0, region[0]-20)==0:
+            start = region[0]
+            end = region[1]+21-region[0]
+        elif min(len(m), region[1]+21)==len(m):
+            start = 20
+            end = len(m)-region[0]
+        else:
+            start = 20
+            end = region[1]+21-region[0]
+        # part of the matrix which will be shown in the contact map
+        m = m[max(0, region[0]-20):min(len(m), region[1]+21), max(0, region[0]-20):min(len(m), region[1]+21)]
+        # readjust scale of color
+        Vmax = m.max()
+    # display the contact map
+    ax.imshow(m, cmap='YlOrRd', vmin=0, vmax=min(Vmax, m.max()), interpolation ='none', 
+              origin ='lower')
+    # display the rectangle
+    if type(region) is tuple:
+        ax.add_patch(patches.Rectangle((start, start), 
+                                        end-start, 
+                                        end-start, 
+                                        fill=False,
+                                        edgecolor='green'))
+    plt.show()
+
+# arbitrary method to find TADs of an HiC file, size of sliding windows necessary (=size minimum of a TAD)
+def found_TADs(path, window, max_size):
+    mat = np.log(np.load(path))
+    mat[mat=='-inf'] = 0
+    # method to find TADs in a sens of lecture (no overlaps)
+    def get_TADs(mat, window, max_size):
+        list_TADs = []
+        n = len(mat)
+        tad = False
+        last_tad = -1
+        for i in range(n-window+1):
+            square = mat[i:i+window, i:i+window]
+            tad_square = square.copy()
+            k = 0
+            while np.quantile(tad_square, 0.2)>3 and not tad and i+k<n-window and k+window<max_size:
+                tad_square = mat[i:i+window+k, i:i+window+k]
+                k+=1
+            # to enlarge the TAD size
+            if np.quantile(square, 0.2)>2 and not tad:
+                list_TADs.append((i, i+k+window))
+                tad = True
+                last_tad = i+k-1
+            elif i>last_tad :
+                tad = False
+        return list_TADs
+    # apply 'get_TADs' in both directions
+    TADs_reverse = []
+    for tad in get_TADs(mat[::-1, ::-1], window, max_size):
+        TADs_reverse.append((len(mat)-tad[1], len(mat)-tad[0]))
+    list_all_TADs = get_TADs(mat, window, max_size) + TADs_reverse
+    return mat, list_all_TADs
+
+# display the contact map with the associated TADs delimited
+def display_TADs(path, list_TADs):
+    mat = np.log(np.load(path))
+    fig, ax = plt.subplots()
+    print(mat.max())
+    Vmax = mat.max()/(len(mat)/1500)
+    # display the contact map
+    ax.imshow(mat, cmap='YlOrRd', vmin=0, vmax=min(Vmax, mat.max()), interpolation ='none', 
+              origin ='lower')
+    # display a rectangle for each TAD
+    for tad in list_TADs:
+        ax.add_patch(patches.Rectangle((tad[0], tad[0]), 
+                                       tad[1]-tad[0], 
+                                       tad[1]-tad[0], 
+                                       fill=False,
+                                       edgecolor='green'))
+    plt.show()
+    for i in range(10):
+        print(i)
+        zone = (i*int(len(mat)/10), (i+1)*int(len(mat)/10))
+        m = mat[zone[0]:zone[1], zone[0]:zone[1]]
+        fig, ax = plt.subplots()
+        ax.imshow(m, cmap='YlOrRd', vmin=0, vmax=min(Vmax, mat.max()), interpolation ='none', 
+              origin ='lower')
+        for tad in list_TADs:
+            if tad[1]>zone[0] or tad[0]<zone[1]:
+                ax.add_patch(patches.Rectangle((tad[0]-zone[0], tad[0]-zone[0]), 
+                                               tad[1]-tad[0], 
+                                               tad[1]-tad[0], 
+                                               fill=False,
+                                               edgecolor='green'))
+        plt.show()
+
+# load the available ArrowHead results
+def read_arrowhead_result(path, chromosome, resolution):
+    df = pd.read_csv(path, sep='\t')
+    df = df[df['chr1']==chromosome]
+    list_tads = []
+    for i in range(len(df)):
+        list_tads.append((int(df['x1'][i]/resolution), int(df['x2'][i]/resolution)))
+    return list_tads
+
+def do_TADtree(path_to_TADtree, path_to_matrix, contact_map_paths, contact_map_names, S=30, M=10, p=3, q=12, gamma=500, N=400, output='./output'):
+    if not os.path.isdir(os.path.join(path_to_matrix, 'output')):
+        os.mkdir(os.path.join(path_to_matrix, 'output'))
+    # construct the controle file (conatining parameters of TADtree)
+    controle_file = open(path_to_matrix+'/control_file.txt', 'w')
+    controle_file.write('S = '+str(S)+'\nM = '+str(M)+'\np = '+str(p)+'\nq = '+str(q)+'\ngamma = '+str(gamma)+'\n\ncontact_map_path = '+path_to_matrix+'/'+contact_map_paths[0])
+    for i in range(1, len(contact_map_paths)):
+        controle_file.write(','+path_to_matrix+'/'+contact_map_paths[i])
+    controle_file.write('\ncontact_map_name = '+contact_map_names[0])
+    for i in range(0, len(contact_map_names)):
+        if not os.path.isdir(os.path.join(path_to_matrix, 'output', contact_map_names[i])):
+            os.mkdir(os.path.join(path_to_matrix, 'output', contact_map_names[i]))
+        if i!=0:
+            controle_file.write(','+contact_map_names[i])
+    controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+path_to_matrix+'/output')
+    controle_file.close()
+    # apply the command line
+    os.system('python '+path_to_TADtree+' '+os.path.join(path_to_matrix, 'control_file.txt'))

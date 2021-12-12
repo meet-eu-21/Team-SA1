@@ -20,16 +20,17 @@ A TAD can be considered the basic unit of chromosome folding - they are the resu
 The primary goal of this project is thus the improvement and analysis of TAD calling tools, algorithms and pipelines from Hi-C sequencing data; we strive to present our results in a clear enough way to hopefully contribute towards this as of yet still ongoing field of research in bioinformatics.
 
 ## Ongoing work
-- Topdom [Publication](https://pubmed.ncbi.nlm.nih.gov/26704975/) and [code](https://github.com/HenrikBengtsson/TopDom), originally coded in R and recoded in Python by the team. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- TADTree [Publication](https://academic.oup.com/bioinformatics/article/32/11/1601/1742546?login=true) and [code](https://github.com/raphael-group/TADtree), coded in Python and adapted for our use. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- Consensus between the above pipelines; based on multiple criterion such as CTCF sites, TAD overlap between pipelines, TAD size categorization, etc. The consensus is the most important part of the project and we would ideally incorporate more than just the two above pipelines. <img src="https://img.icons8.com/emoji/48/000000/folded-hands-emoji.png" width="20"/>
-- TAD size classification; by studying the size distributions of TADs identified by each ppeline, we hope to be able to classify TADs into main TADs, sub-TADs, etc., and give confidence scores of some sort.
+- Topdom [Publication](https://pubmed.ncbi.nlm.nih.gov/26704975/) and [code](https://github.com/HenrikBengtsson/TopDom), originally coded in R and recoded in Python by the team. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/arrow--v2.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
+- TADTree [Publication](https://academic.oup.com/bioinformatics/article/32/11/1601/1742546?login=true) and [code](https://github.com/raphael-group/TADtree), coded in Python and adapted for our use. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/> 
+- Consensus between the above pipelines; based on multiple criterion such as CTCF sites, TAD overlap between pipelines, TAD size categorization, etc. The consensus is the most important part of the project and we would ideally incorporate more than just the two above pipelines. <img src="https://img.icons8.com/emoji/48/000000/folded-hands-emoji.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
+- TAD size classification; by studying the size distributions of TADs identified by each ppeline, we hope to be able to classify TADs into main TADs, sub-TADs, etc., and give confidence scores of some sort. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
 - ... and more
 
 ## Upcoming work
-- [TADTool](https://github.com/vaquerizaslab/tadtool): a seemingly comprehensive set of tools that could be useful for improving TAD quantification by identifying meaningful parameters.
-- [HiCtool](https://github.com/Zhong-Lab-UCSD/HiCtool): another promising pipeline to identify TADs from raw Hi-C data.
-- CTCF sites integration to consensus analysis.
+- [TADTool](https://github.com/vaquerizaslab/tadtool): a seemingly comprehensive set of tools that could be useful for improving TAD quantification by identifying meaningful parameters. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
+- [HiCtool](https://github.com/Zhong-Lab-UCSD/HiCtool): another promising pipeline to identify TADs from raw Hi-C data. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
+- [TADBit](https://github.com/3DGenomes/TADbit): a python library that was also included in Rao et al.'s assessement of TAD calling tools. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
+- CTCF sites integration to consensus analysis. <img src="https://img.icons8.com/external-icongeek26-linear-colour-icongeek26/64/000000/external-biology-science-and-technology-icongeek26-linear-colour-icongeek26.png" width="20"/>
 - ... and more
 
 ## Sections and folders
@@ -40,9 +41,12 @@ The respective folders for this GitHub are:
 - tutorial_notebook
 - ... and more
 
-## Code and libraries, dependencies examples (might not need this section)
+## Code and libraries, dependencies examples (tbd)
 ```python
 import numpy as np
 import liam_method as lm
 ```
 `topdom` `arrowhead` `tadtree` `tadtool` `hictool`
+
+## Credit
+Icons embedded from [icons8](https://icons8.com/), all rights belonging to their respective owners.

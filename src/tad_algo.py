@@ -124,3 +124,62 @@ class TopDom(TADsDetector):
         false_pos = (binextremums == -1) & (pvalues >= 0.05)
         binextremums[false_pos] = -2
         return binextremums
+
+
+class TADtree(TADsDetector):
+    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=3, q=12, gamma=500, N=400):
+        if not os.path.isfile(path_to_TADtree):
+            raise Exception("TADtree.py not found")
+        # TODO: Check
+        folder_path = hic_obj.get_folder()
+        chrom_data_filename = hic_obj.path.replace(".RAWobserved",".txt")
+        output_folder='TADtree_outputs'
+        result_path = os.path.join(folder_path, output_folder, chrom_data_filename.split('_')[0], 'N{}.txt'.format(int(N-1)))
+        if not os.path.isfile(result_path):
+            self.runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S, M, p, q, gamma, N, output_folder)
+
+        tads_by_tadtree = pd.read_csv(result_path, delimiter='\t')
+        tads_by_tadtree = tads_by_tadtree.iloc[:, [1,2]]
+        tads = []
+        for i in range(len(tads_by_tadtree['start'])):
+            tads.append((tads_by_tadtree['start'][i], tads_by_tadtree['end'][i]))
+        return tads
+    
+    def runMultipleTADtree(path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+        chrom_names = [chrom.split('_')[0] for chrom in chrom_data_filenames]
+        if not os.path.isdir(os.path.join(folder_path, output_folder)):
+            os.mkdir(os.path.join(folder_path, output_folder))
+        # construct the controle file (conatining parameters of TADtree)
+        controle_file = open(folder_path+os.path.sep+'control_file.txt', 'w')
+        controle_file.write('S = '+str(S)+'\nM = '+str(M)+'\np = '+str(p)+'\nq = '+str(q)+'\ngamma = '+str(gamma)+'\n\ncontact_map_path = '+folder_path+os.path.sep+chrom_data_filenames[0])
+        for i in range(1, len(chrom_data_filenames)):
+            controle_file.write(','+folder_path+os.path.sep+chrom_data_filenames[i])
+        controle_file.write('\ncontact_map_name = '+chrom_names[0])
+        for i in range(0, len(chrom_names)):
+            if not os.path.isdir(os.path.join(folder_path, output_folder, chrom_names[i])):
+                os.mkdir(os.path.join(folder_path, output_folder, chrom_names[i]))
+            if i!=0:
+                controle_file.write(','+chrom_names[i])
+        controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+folder_path+os.path.sep+output_folder)
+        controle_file.close()
+        # apply the command line
+        os.system('python '+path_to_TADtree+' '+os.path.join(folder_path, 'control_file.txt'))
+        os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
+        return chrom_names
+
+    def runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+        chrom_name = chrom_data_filename.split('_')[0]
+        if not os.path.isdir(os.path.join(folder_path, output_folder)):
+            os.mkdir(os.path.join(folder_path, output_folder))
+        # construct the controle file (conatining parameters of TADtree)
+        controle_file = open(folder_path+os.path.sep+'control_file.txt', 'w')
+        controle_file.write('S = '+str(S)+'\nM = '+str(M)+'\np = '+str(p)+'\nq = '+str(q)+'\ngamma = '+str(gamma)+'\n\ncontact_map_path = '+folder_path+os.path.sep+chrom_data_filename)
+        controle_file.write('\ncontact_map_name = '+chrom_name)
+        if not os.path.isdir(os.path.join(folder_path, output_folder, chrom_name)):
+            os.mkdir(os.path.join(folder_path, output_folder, chrom_name))
+        controle_file.write('\nN = '+str(N)+'\n\noutput_directory = '+folder_path+os.path.sep+output_folder)
+        controle_file.close()
+        # apply the command line
+        os.system('python '+path_to_TADtree+' '+os.path.join(folder_path, 'control_file.txt'))
+        os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
+        return chrom_name

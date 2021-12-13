@@ -52,7 +52,7 @@ def preprocess_data(folder, resolution):
 
 # plot a contact map of an HiC file, possibility to zoom on a zone and to delimite it 
 def plot_data(m, region=None, scale='log', tads=None, resolution=None):
-    dezoom = 5
+    original_len = len(m)
     if scale == 'log':
         m = np.log(m)
         Vmax = m.max()/np.log10(len(m)/10)
@@ -62,14 +62,16 @@ def plot_data(m, region=None, scale='log', tads=None, resolution=None):
         if resolution is None:
             raise ValueError("Resolution must be specified for zoomed plots")
         # dezoom a bit to highlight the region
+        region_length = (region[1]-region[0])/resolution
+        dezoom = int(region_length/20)
         # TODO: Check
-        start = min(int(region[0]-dezoom/resolution),0)
-        end = max(int(region[1]-dezoom/resolution),len(m)-1)
+        start = max(int((region[0]/resolution)-dezoom),0)
+        end = min(int((region[1]/resolution)+dezoom),original_len-1)
         m = m[start:end, start:end]
         # Vmax = m.max()/np.log10(len(m)/10)
-    else:
+    # else:
         # Vmax = m.max()/np.log10(len(m)/10)
-        pass
+
     fig, ax = plt.subplots()
     shw = ax.imshow(m, cmap='OrRd', vmin=0, vmax=Vmax, interpolation ='none', 
               origin ='upper')
@@ -84,12 +86,14 @@ def plot_data(m, region=None, scale='log', tads=None, resolution=None):
             xy = (int(tad[0]/resolution), int(tad[0]/resolution))
             ax.add_patch(Rectangle(xy, tad_length, tad_length, fill=False, edgecolor='blue', linewidth=1))
     if region is not None:
-        ax.add_patch(Rectangle((dezoom, dezoom), 
-                                len(m)-(dezoom*2),
-                                len(m)-(dezoom*2), 
+        dezoom_left = min(start, dezoom)
+        dezoom_right = min(original_len-end, dezoom)
+        ax.add_patch(Rectangle((dezoom_left, dezoom_left), 
+                                len(m)-(dezoom_left+dezoom_right),
+                                len(m)-(dezoom_left+dezoom_right), 
                                 fill=False,
                                 edgecolor='black',
-                                linewidth=3))
+                                linewidth=2))
     plt.show()
 
 class Hicmat:
@@ -128,4 +132,7 @@ class Hicmat:
 
     def get_folder(self):
         return os.path.dirname(self.path)
+
+    def get_name(self):
+        return os.path.basename(self.path)
 

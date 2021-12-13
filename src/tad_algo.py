@@ -142,7 +142,7 @@ class TADtree(TADsDetector):
         tads_by_tadtree = tads_by_tadtree.iloc[:, [1,2]]
         tads = []
         for i in range(len(tads_by_tadtree['start'])):
-            tads.append((tads_by_tadtree['start'][i], tads_by_tadtree['end'][i]))
+            tads.append((int(tads_by_tadtree['start'][i]*hic_obj.resolution), int(tads_by_tadtree['end'][i]*hic_obj.resolution)))
         return tads
     
     def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):

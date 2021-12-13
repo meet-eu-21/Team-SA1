@@ -132,7 +132,7 @@ class TADtree(TADsDetector):
             raise Exception("TADtree.py not found")
         # TODO: Check
         folder_path = hic_obj.get_folder()
-        chrom_data_filename = hic_obj.path.replace(".RAWobserved",".txt")
+        chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
         output_folder='TADtree_outputs'
         result_path = os.path.join(folder_path, output_folder, chrom_data_filename.split('_')[0], 'N{}.txt'.format(int(N-1)))
         if not os.path.isfile(result_path):
@@ -145,7 +145,7 @@ class TADtree(TADsDetector):
             tads.append((tads_by_tadtree['start'][i], tads_by_tadtree['end'][i]))
         return tads
     
-    def runMultipleTADtree(path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
         chrom_names = [chrom.split('_')[0] for chrom in chrom_data_filenames]
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))
@@ -167,7 +167,7 @@ class TADtree(TADsDetector):
         os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
         return chrom_names
 
-    def runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runSingleTADtree(self, path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
         chrom_name = chrom_data_filename.split('_')[0]
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))

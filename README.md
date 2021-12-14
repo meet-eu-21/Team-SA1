@@ -31,9 +31,12 @@ The primary goal of this project is thus the improvement and analysis of TAD cal
 - [HiCtool](https://github.com/Zhong-Lab-UCSD/HiCtool): another promising pipeline to identify TADs from raw Hi-C data. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
 - [TADBit](https://github.com/3DGenomes/TADbit): a python library that was also included in Rao et al.'s assessement of TAD calling tools. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
 - CTCF sites integration to consensus analysis. <img src="https://img.icons8.com/external-icongeek26-linear-colour-icongeek26/64/000000/external-biology-science-and-technology-icongeek26-linear-colour-icongeek26.png" width="20"/>
+- [TADCompare](https://bioconductor.org/packages/devel/bioc/vignettes/TADCompare/inst/doc/TADCompare.html) and [input format](https://bioconductor.org/packages/devel/bioc/vignettes/TADCompare/inst/doc/Input_Data.html): a very recent and promising package in R that allows identification of differential TAD boundaries b/ two datasets and has potential for consensus calling. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/>
 - ... and more
 
 ## Sections and folders
+**This part needs to be updated**
+
 The respective folders for this GitHub are:
 - Arrowhead
 - TADTree

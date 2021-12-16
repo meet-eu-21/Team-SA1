@@ -4,7 +4,9 @@ import pandas as pd
 import os, time, logging
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 from matplotlib.patches import Rectangle
+from src.utils import SCN
 
 # load an HiC file with his resolution and return a matrix in numpy format
 def load_hic(path, resolution):
@@ -51,11 +53,14 @@ def preprocess_data(folder, resolution):
     logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
 
 # plot a contact map of an HiC file, possibility to zoom on a zone and to delimite it 
-def plot_data(m, region=None, scale='log', tads=None, resolution=None):
+def plot_data(m, resolution, region=None, scale='log', tads=None):
     original_len = len(m)
     if scale == 'log':
-        m = np.log(m)
-        Vmax = m.max()/np.log10(len(m)/10)
+        m = np.log10(m)
+        m = SCN(m)
+        # Vmax = m.max()/np.log10(len(m)/10)
+        Vmax = m.max()
+        Vmin = m.min()
         # TODO: find something for contrast diagonal / other
     if type(region) is tuple:
         # Subset of the file - zoom on a region
@@ -73,14 +78,22 @@ def plot_data(m, region=None, scale='log', tads=None, resolution=None):
         # Vmax = m.max()/np.log10(len(m)/10)
 
     fig, ax = plt.subplots()
-    shw = ax.imshow(m, cmap='OrRd', vmin=0, vmax=Vmax, interpolation ='none', 
+    shw = ax.imshow(m, cmap='OrRd', interpolation ='none', 
               origin ='upper')
     
+    if type(region) is tuple:
+        start_idx = max(int(region[0]-dezoom),0)
+    else:
+        start_idx = 0
+    xticks, _ = plt.xticks()
+    xticks_cor = xticks[1:-1]
+    yticks, _ = plt.yticks()
+    yticks_cor = yticks[1:-1]
+    plt.xticks(ticks=xticks_cor, labels=['{}'.format(int(((b+start_idx)*resolution)/1000000)) for b in xticks_cor])
+    plt.yticks(ticks=yticks_cor, labels=['{}'.format(int(((b+start_idx)*resolution)/1000000)) for b in yticks_cor])
     bar = plt.colorbar(shw)
     bar.set_label('Scale')
     if tads is not None:
-        if resolution is None:
-            raise Exception('Resolution is not specified')
         for tad in tads:
             tad_length = (tad[1]-tad[0]) / resolution
             xy = (int(tad[0]/resolution), int(tad[0]/resolution))
@@ -102,7 +115,7 @@ class Hicmat:
         if m.shape[0] != m.shape[1]:
             raise ValueError('Matrix is not square')
         self.resolution = resolution
-        self.original_matrix = m
+        self.original_matrix = np.array(m)
         self.filtered_coords = None
         self.reduced_matrix = None
         self.regions = None

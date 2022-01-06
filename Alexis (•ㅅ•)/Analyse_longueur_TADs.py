@@ -1,5 +1,5 @@
 """
-pwd should be: C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Donnés\\TAD
+pwd should be: C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Data\\TAD
 GSE63525_HMEC_Arrowhead_domainlist.txt
 GSE63525_HUVEC_Arrowhead_domainlist.txt
 GSE63525_IMR90_Arrowhead_domainlist.txt
@@ -47,7 +47,7 @@ def plot_curve(name_file):
     plt.show()
     return l_long
 
-def plot_bar(name_file):
+def plot_bar_AH(name_file):          ############# PLOT FOR ARROWHEAD
     dic=dictionnary_length(name_file)
     l_long=[]
     l_count=[]
@@ -66,6 +66,65 @@ def plot_bar(name_file):
     esp,var,std=np.mean(l_long),np.nanvar(l_long),np.nanstd(l_long)
     return l_long,l_count,esp,var,std
 
+def plot_bar_TD(topdom_tads):         ########## PLOT FOR TOP DOM
+    l_long=[]
+    l_count=[]
+    dico_long={}
+    for i in topdom_tads:
+        if i[1]-i[0] in dico_long.keys():
+            dico_long[i[1]-i[0]]+=1
+        else:
+            dico_long[i[1]-i[0]]=1
+    l_long=list(dico_long.keys())
+    l_long.sort()
+    for j in l_long:
+        l_count.append(dico_long[j])
+    plt.bar(range(len(l_count)),l_count,tick_label=l_long)
+    plt.show()
+    esp,var,std=np.mean(l_long),np.nanvar(l_long),np.nanstd(l_long)
+    return l_long,l_count,dico_long
 
 
-os.chdir("C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Donnés\\TAD")
+os.chdir("C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Data\\TAD")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

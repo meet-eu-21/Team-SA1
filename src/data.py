@@ -1,12 +1,13 @@
 
 import numpy as np
 import pandas as pd
-import os, time, logging
+import os, time, logging, subprocess, platform
+import random
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.patches import Rectangle
-from src.utils import SCN
+from src.utils import SCN, read_arrowhead_result
 
 # load an HiC file with his resolution and return a matrix in numpy format
 def load_hic(path, resolution):
@@ -149,3 +150,36 @@ class Hicmat:
     def get_name(self):
         return os.path.basename(self.path)
 
+
+
+def load_hic_groundtruth(data_path, resolution, arrowhead_folder=os.path.join('data', 'TADs'), threshold=1):
+	"""
+		Function to correctly load the HiC matrix and its corresponding Arrowhead results
+	"""
+	path_comps = data_path.split(os.sep)
+
+	if 'GM12878' in path_comps:
+		# GM12878
+		chr = path_comps[path_comps.index('GM12878')+2].split('_')[0][3:]
+		arrowhead_tads = read_arrowhead_result(os.path.join(arrowhead_folder, 'GSE63525_GM12878_primary+replicate_Arrowhead_domainlist.txt'), chromosome=chr)
+	elif 'HMEC' in path_comps:
+		# HMEC
+		chr = path_comps[path_comps.index('HMEC')+2][3:]
+		arrowhead_tads = read_arrowhead_result(os.path.join(arrowhead_folder, 'GSE63525_HMEC_Arrowhead_domainlist.txt'), chromosome=chr)
+	elif 'HUVEC' in path_comps:
+		# HUVEC
+		chr = path_comps[path_comps.index('HUVEC')+2][3:]
+		arrowhead_tads = read_arrowhead_result(os.path.join(arrowhead_folder, 'GSE63525_HUVEC_Arrowhead_domainlist.txt'), chromosome=chr)
+	elif 'IMR90' in path_comps:
+		# IMR90
+		chr = path_comps[path_comps.index('IMR90')+2][3:]
+		arrowhead_tads = read_arrowhead_result(os.path.join(arrowhead_folder, 'GSE63525_IMR90_Arrowhead_domainlist.txt'), chromosome=chr)
+	elif 'NHEK' in path_comps:
+		# NHEK
+		chr = path_comps[path_comps.index('NHEK')+2][3:]
+		arrowhead_tads = read_arrowhead_result(os.path.join(arrowhead_folder, 'GSE63525_NHEK_Arrowhead_domainlist.txt'), chromosome=chr)
+	
+	hic_mat = Hicmat(data_path, resolution)
+	hic_mat.filter(threshold = threshold)
+
+	return hic_mat, arrowhead_tads

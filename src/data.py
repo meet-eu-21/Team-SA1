@@ -183,3 +183,94 @@ def load_hic_groundtruth(data_path, resolution, arrowhead_folder=os.path.join('d
 	hic_mat.filter(threshold = threshold)
 
 	return hic_mat, arrowhead_tads
+
+class HiCDataset:
+    def __init__(self, data_folder) -> None:
+        self.data_folder = os.path.join(data_folder, 'HiC')
+        self.development_set = None
+        self.test_set = None 
+        self.cell_types = ['GM12878', 'HMEC', 'HUVEC', 'IMR90', 'NHEK']
+        self.resolutions = ['25kb_resolution_intrachromosomal', '100kb_resolution_intrachromosomal']
+        self.data_dict = {res:{cell_type:[] for cell_type in self.cell_types} for res in self.resolutions}
+        self.data_count = {res:{cell_type:0 for cell_type in self.cell_types} for res in self.resolutions}
+        self.all_count = 0
+
+    def preprocess_all(self):
+        if platform.system() in ['Linux', 'Darwin']:
+            bash_command_raw = 'find . -type f -name "*.RAWobserved" | wc -l'
+            cmd_raw = subprocess.run([bash_command_raw], shell=True, capture_output=True, cwd=self.data_folder)
+            bash_command_pre = 'find . -type f -name "*.npy" | wc -l'
+            cmd_pre = subprocess.run([bash_command_pre], shell=True, capture_output=True, cwd=self.data_folder)
+        elif platform.system() == 'Windows':
+            powershell_command_raw = "(Get-ChildItem -recurse -filter *.RAWobserved | Measure-Object).Count"
+            cmd_raw = subprocess.run(["powershell", "-Command", powershell_command_raw], shell=True, capture_output=True, cwd=self.data_folder)
+            powershell_command_pre = "(Get-ChildItem -recurse -filter *.npy | Measure-Object).Count"
+            cmd_pre = subprocess.run(["powershell", "-Command", powershell_command_pre], shell=True, capture_output=True, cwd=self.data_folder)
+        else:
+            raise ValueError('Unsupported platform {}'.format(platform.system()))
+        raw_count = int(cmd_raw.stdout)
+        pre_count = int(cmd_pre.stdout)
+
+        if raw_count != pre_count:
+            if pre_count != 0:
+                raise ValueError('Preprocessed files already exist, but not all files have been processed - please manually check data folders')
+            
+            logging.info('Preprocessing all HiC data')
+            for cell_type in self.cell_types:
+                preprocess_data(os.path.join(self.data_folder, cell_type, '25kb_resolution_intrachromosomal'), 25000)
+                for path in os.listdir(os.path.join(self.data_folder, cell_type, '25kb_resolution_intrachromosomal')):
+                    if os.path.isdir(os.path.join(self.data_folder, cell_type, '25kb_resolution_intrachromosomal', path)):
+                        preprocess_data(os.path.join(self.data_folder, cell_type, '25kb_resolution_intrachromosomal', path, 'MAPQGE30'), 25000)
+            for cell_type in self.cell_types:
+                preprocess_data(os.path.join(self.data_folder, cell_type, '100kb_resolution_intrachromosomal'), 100000)
+                for path in os.listdir(os.path.join(self.data_folder, cell_type, '100kb_resolution_intrachromosomal')):
+                    if os.path.isdir(os.path.join(self.data_folder, cell_type, '100kb_resolution_intrachromosomal', path)):
+                        preprocess_data(os.path.join(self.data_folder, cell_type, '100kb_resolution_intrachromosomal', path, 'MAPQGE30'), 100000)
+        else:
+            logging.info('Preprocessing all HiC data already done')
+
+    def build_data_dict(self):
+        self.preprocess_all()
+
+        for cell_type in self.cell_types:
+            for resolution in self.resolutions:
+                for path in os.listdir(os.path.join(self.data_folder, cell_type, resolution)):
+                    if path.endswith('.npy'):
+                        self.data_dict[resolution][cell_type].append(os.path.join(self.data_folder, cell_type, resolution, path))
+                        self.data_count[resolution][cell_type] += 1
+                        self.all_count += 1
+                    elif os.path.isdir(os.path.join(self.data_folder, cell_type, resolution, path)):
+                        for f in os.listdir(os.path.join(self.data_folder, cell_type, resolution, path, 'MAPQGE30')):
+                            if f.endswith('.npy'):
+                                self.data_dict[resolution][cell_type].append(os.path.join(self.data_folder, cell_type, resolution, path, 'MAPQGE30', f))
+                                self.data_count[resolution][cell_type] += 1
+                                self.all_count += 1
+
+        if platform.system() in ['Linux', 'Darwin']:
+            bash_command = 'find . -type f -name "*.RAWobserved" | wc -l'
+            cmd = subprocess.run([bash_command], shell=True, capture_output=True, cwd=self.data_folder)
+        elif platform.system() == 'Windows':
+            powershell_command = "(Get-ChildItem -recurse -filter *.RAWobserved | Measure-Object).Count"
+            cmd = subprocess.run(["powershell", "-Command", powershell_command], shell=True, capture_output=True, cwd=self.data_folder)
+        else:
+            raise ValueError('Unsupported platform {}'.format(platform.system()))
+        cmd_count = int(cmd.stdout)
+        if self.all_count != cmd_count:
+            raise ValueError('Number of files considered for splits ({}) doesn\'t match the number of files in the dataset ({})'.format(self.all_count, cmd_count))
+
+
+    def split(self, dev_ratio = 0.7, test_ratio=0.3, seed=123):
+        assert dev_ratio + test_ratio == 1.0
+        self.development_set = []
+        self.test_set = []
+
+        random.seed(seed)
+
+        for resolution in self.resolutions:
+            for cell_type in self.cell_types:
+                random.shuffle(self.data_dict[resolution][cell_type])
+                split_index = int(len(self.data_dict[resolution][cell_type]) * dev_ratio)
+                self.development_set += self.data_dict[resolution][cell_type][:split_index]
+                self.test_set += self.data_dict[resolution][cell_type][split_index:]
+
+        return self.development_set, self.test_set

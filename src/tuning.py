@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os, contextlib, logging, io
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from src.tad_algo import TopDom, TADtree
 from src.metrics import compare_to_groundtruth
@@ -25,6 +27,7 @@ def tune_topdom(development_set, param_ranges={'window': (2,15)}):
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(window_range), len(set_25kb))), np.zeros((len(window_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(window_range), len(set_100kb))), np.zeros((len(window_range), len(set_100kb)))
         for i, window in enumerate(tqdm(window_range)):
+            print('TopDom tuning - Window size: {}'.format(window))
             with contextlib.redirect_stdout(io.StringIO()) as f:
                 for j, f_25kb in enumerate(set_25kb):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
@@ -40,6 +43,7 @@ def tune_topdom(development_set, param_ranges={'window': (2,15)}):
                     _, _, gt_rate_topdom, pred_rate_topdom = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=topdom_tads, gap=200000)
                     gt_rates_100kb[i,j] = gt_rate_topdom
                     pred_rates_100kb[i,j] = pred_rate_topdom
+        print('\tTopDom tuning - plotting')
         pred_rates_25kb = pred_rates_25kb.mean(axis=1)
         pred_rates_100kb = pred_rates_100kb.mean(axis=1)
         gt_rates_25kb = gt_rates_25kb.mean(axis=1)
@@ -59,7 +63,7 @@ def tune_topdom(development_set, param_ranges={'window': (2,15)}):
         plt.savefig('figures/tune_topdom_window{}-{}.png'.format(param_ranges['window'][0], param_ranges['window'][1]))
 
 
-def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
+def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,600)}):
     set_25kb = []
     set_100kb = []
     for f in development_set:
@@ -72,6 +76,28 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
     
     logging.info('Tuning TADTree on GM12878 intrachromosomal HiC data')
     if 'N' in param_ranges:
+        # Preprocess TAD results using parallelization
+        data_25kb = []
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            for j, f_25kb in enumerate(set_25kb):
+                hic_mat, _ = load_hic_groundtruth(f_25kb, 25000)
+                data_25kb.append(hic_mat)
+        data_100kb = []
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            for j, f_100kb in enumerate(set_100kb):
+                hic_mat, _ = load_hic_groundtruth(f_100kb, 100000)
+                data_100kb.append(hic_mat)
+        print('Run TADtree on 25kb data')
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            tadtree = TADtree()
+            fct = partial(tadtree.getTADs, N=param_ranges['N'][1])
+            executor.map(fct, data_25kb)
+        print('Run TADtree on 100kb data')
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            tadtree = TADtree()
+            fct = partial(tadtree.getTADs, N=param_ranges['N'][1])
+            executor.map(fct, data_100kb)
+
         N_range_rev = range(param_ranges['N'][1]-1, param_ranges['N'][0]-1, -1) # Reverse range
         N_range = range(param_ranges['N'][0], param_ranges['N'][1])
         assert len(N_range) == len(N_range_rev)
@@ -79,22 +105,26 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(N_range), len(set_25kb))), np.zeros((len(N_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(N_range), len(set_100kb))), np.zeros((len(N_range), len(set_100kb)))
-        for i, n in enumerate(tqdm(N_range_rev)):
+        for i, n in enumerate(N_range_rev):
+            print('TADTree tuning - N: {}'.format(n))
             with contextlib.redirect_stdout(io.StringIO()) as f:
-                for j, f_25kb in enumerate(set_25kb):
+                print('\tTADTree tuning - starting 25kb')
+                for j, f_25kb in enumerate(tqdm(set_25kb)):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
                     tadtree = TADtree()
                     tadtree_tads = tadtree.getTADs(hic_mat, N=n)
                     _, _, gt_rate_topdom, pred_rate_topdom = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=tadtree_tads, gap=200000)
                     gt_rates_25kb[len_range-i-1,j] = gt_rate_topdom
                     pred_rates_25kb[len_range-i-1,j] = pred_rate_topdom
-                for j, f_100kb in enumerate(set_100kb):
+                print('\tTADTree tuning - starting 100kb')
+                for j, f_100kb in enumerate(tqdm(set_100kb)):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
                     tadtree = TADtree()
                     tadtree_tads = tadtree.getTADs(hic_mat, N=n)
                     _, _, gt_rate_topdom, pred_rate_topdom = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=tadtree_tads, gap=200000)
                     gt_rates_100kb[len_range-i-1,j] = gt_rate_topdom
                     pred_rates_100kb[len_range-i-1,j] = pred_rate_topdom
+        print('\tTADTree tuning - plotting')
         pred_rates_25kb = pred_rates_25kb.mean(axis=1)
         pred_rates_100kb = pred_rates_100kb.mean(axis=1)
         gt_rates_25kb = gt_rates_25kb.mean(axis=1)
@@ -114,26 +144,52 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
         plt.savefig('figures/tune_tadtree_N{}-{}.png'.format(param_ranges['N'][0], param_ranges['N'][1]))
     
     if 'p' in param_ranges:
+         # Preprocess TAD results using parallelization
+        data_25kb = []
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            for j, f_25kb in enumerate(set_25kb):
+                hic_mat, _ = load_hic_groundtruth(f_25kb, 25000)
+                data_25kb.append(hic_mat)
+        data_100kb = []
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            for j, f_100kb in enumerate(set_100kb):
+                hic_mat, _ = load_hic_groundtruth(f_100kb, 100000)
+                data_100kb.append(hic_mat)
+        print('Run TADtree on 25kb data')
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            tadtree = TADtree()
+            fct = partial(tadtree.getTADs, p=param_ranges['p'][1])
+            executor.map(fct, data_25kb)
+        print('Run TADtree on 100kb data')
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            tadtree = TADtree()
+            fct = partial(tadtree.getTADs, p=param_ranges['p'][1])
+            executor.map(fct, data_100kb)
+
         p_range = range(param_ranges['p'][0], param_ranges['p'][1])
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(p_range), len(set_25kb))), np.zeros((len(p_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(p_range), len(set_100kb))), np.zeros((len(p_range), len(set_100kb)))
         for i, p in enumerate(tqdm(p_range)):
+            print('TADTree tuning - p: {}'.format(p))
             with contextlib.redirect_stdout(io.StringIO()) as f:
-                for j, f_25kb in enumerate(set_25kb):
+                print('\tTADTree tuning - starting 25kb')
+                for j, f_25kb in enumerate(tqdm(set_25kb)):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
                     tadtree = TADtree()
                     tadtree_tads = tadtree.getTADs(hic_mat, p=p)
                     _, _, gt_rate_topdom, pred_rate_topdom = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=tadtree_tads, gap=200000)
                     gt_rates_25kb[i,j] = gt_rate_topdom
                     pred_rates_25kb[i,j] = pred_rate_topdom
-                for j, f_100kb in enumerate(set_100kb):
+                print('\tTADTree tuning - starting 100kb')
+                for j, f_100kb in enumerate(tqdm(set_100kb)):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
                     tadtree = TADtree()
                     tadtree_tads = tadtree.getTADs(hic_mat, p=p)
                     _, _, gt_rate_topdom, pred_rate_topdom = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=tadtree_tads, gap=200000)
                     gt_rates_100kb[i,j] = gt_rate_topdom
                     pred_rates_100kb[i,j] = pred_rate_topdom
+        print('\tTADTree tuning - plotting')
         pred_rates_25kb = pred_rates_25kb.mean(axis=1)
         pred_rates_100kb = pred_rates_100kb.mean(axis=1)
         gt_rates_25kb = gt_rates_25kb.mean(axis=1)

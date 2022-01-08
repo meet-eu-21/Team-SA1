@@ -72,7 +72,7 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
     
     logging.info('Tuning TADTree on GM12878 intrachromosomal HiC data')
     if 'N' in param_ranges:
-        N_range_rev = range(param_ranges['p'][1]-1, param_ranges['p'][0]-1, -1) # Reverse range
+        N_range_rev = range(param_ranges['N'][1]-1, param_ranges['N'][0]-1, -1) # Reverse range
         N_range = range(param_ranges['N'][0], param_ranges['N'][1])
         assert len(N_range) == len(N_range_rev)
         len_range = len(N_range)
@@ -103,13 +103,13 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
         ax1.plot(N_range, pred_rates_25kb, label='Rate of Predicted TADs by TADtree present in Ground Truth')
         ax1.set_xlabel('N')
         ax1.set_ylabel('Rate')
-        ax1.set_title('TADtree on GM12878 25kb intrachromosomal HiC data')
+        ax1.set_title('TADtree on 25kb intrachromosomal HiC data')
         ax1.legend()
         ax2.plot(N_range, gt_rates_100kb, label='Rate of Ground Truth TADs correctly predicted by TADtree')
         ax2.plot(N_range, pred_rates_100kb, label='Rate of Predicted TADs by TADtree present in Ground Truth')
         ax2.set_xlabel('N')
         ax2.set_ylabel('Rate')
-        ax2.set_title('TADtree on GM12878 100kb intrachromosomal HiC data')
+        ax2.set_title('TADtree on 100kb intrachromosomal HiC data')
         ax2.legend()
         plt.savefig('figures/tune_tadtree_N{}-{}.png'.format(param_ranges['N'][0], param_ranges['N'][1]))
     
@@ -142,13 +142,13 @@ def tune_tadtree(development_set, param_ranges={'p': (2,5), 'N': (100,700)}):
         ax1.plot(p_range, pred_rates_25kb, label='Rate of Predicted TADs by TADtree present in Ground Truth')
         ax1.set_xlabel('p')
         ax1.set_ylabel('Rate')
-        ax1.set_title('TADtree on GM12878 25kb intrachromosomal HiC data')
+        ax1.set_title('TADtree on 25kb intrachromosomal HiC data')
         ax1.legend()
         ax2.plot(p_range, gt_rates_100kb, label='Rate of Ground Truth TADs correctly predicted by TADtree')
         ax2.plot(p_range, pred_rates_100kb, label='Rate of Predicted TADs by TADtree present in Ground Truth')
         ax2.set_xlabel('p')
         ax2.set_ylabel('Rate')
-        ax2.set_title('TADtree on GM12878 100kb intrachromosomal HiC data')
+        ax2.set_title('TADtree on 100kb intrachromosomal HiC data')
         ax2.legend()
         plt.savefig('figures/tune_tadtree_p{}-{}.png'.format(param_ranges['p'][0], param_ranges['p'][1]))
         

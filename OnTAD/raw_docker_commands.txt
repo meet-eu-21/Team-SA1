@@ -1,0 +1,12 @@
+# These are the raw commands to run in order for OnTAD to work.
+# This assumes that you have WSL2 + Docker installed on your device.
+# Place yourself in any folder, since Docker should work independent of local paths, as long as the absolute filepath is specified for the -v option.
+# Replace the first path after -v with your own local path containing the input files
+# For example, in my case I'd replace YOUR_PATH with: /mnt/c/Users/yannz/OneDrive/Bureau/OnTAD
+# The result output file (OnTAD_KRnorm_pen0.1_max200_chr1_100kb) will be generated in YOUR_PATH
+# For more details: https://github.com/anlin00007/OnTAD
+
+docker pull anlin00007/ontad:v1.2
+docker run -i -v YOUR_PATH:/tmp anlin00007/ontad:v1.2 OnTAD /tmp/data/chr1_100kb.matrix -penalty 0.1 -maxsz 200 -o tmp/output/OnTAD_KRnorm_pen0.1_max200_chr1_100kb
+
+# When testing has been furthered I would like to add more complex commands to run on multiple chromosomes

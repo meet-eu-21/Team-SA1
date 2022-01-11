@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import os, time, logging
-from sklearn.preprocessing import scale
 from scipy import stats
 from scipy.stats import ranksums
 
@@ -127,16 +126,18 @@ class TopDom(TADsDetector):
 
 
 class TADtree(TADsDetector):
-    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=3, q=12, gamma=500, N=400):
+    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=3, q=12, gamma=500, N=500):
         if not os.path.isfile(path_to_TADtree):
             raise Exception("TADtree.py not found")
+        if hic_obj.resolution != 100000:
+            raise Exception('TADtree is mean to be called with 100kb data only')
         # TODO: Check
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
-        output_folder='TADtree_outputs'
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         result_path = os.path.join(folder_path, output_folder, chrom_data_filename.split('_')[0], 'N{}.txt'.format(int(N-1)))
         if not os.path.isfile(result_path):
-            self.runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S, M, p, q, gamma, N, output_folder)
+            self.runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S, M, p, q, gamma, N)
 
         tads_by_tadtree = pd.read_csv(result_path, delimiter='\t')
         tads_by_tadtree = tads_by_tadtree.iloc[:, [1,2]]
@@ -145,8 +146,9 @@ class TADtree(TADsDetector):
             tads.append((int(tads_by_tadtree['start'][i]*hic_obj.resolution), int(tads_by_tadtree['end'][i]*hic_obj.resolution)))
         return tads
     
-    def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400):
         chrom_names = [chrom.split('_')[0] for chrom in chrom_data_filenames]
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))
         # construct the controle file (conatining parameters of TADtree)
@@ -167,8 +169,9 @@ class TADtree(TADsDetector):
         os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
         return chrom_names
 
-    def runSingleTADtree(self, path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runSingleTADtree(self, path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400):
         chrom_name = chrom_data_filename.split('_')[0]
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))
         # construct the controle file (conatining parameters of TADtree)

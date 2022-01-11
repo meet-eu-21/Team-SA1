@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import os, time, logging, subprocess, platform
 import random
-from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.patches import Rectangle
@@ -240,6 +239,8 @@ class HiCDataset:
                         self.data_count[resolution][cell_type] += 1
                         self.all_count += 1
                     elif os.path.isdir(os.path.join(self.data_folder, cell_type, resolution, path)):
+                        if path == 'TADtree_outputs':
+                            continue
                         for f in os.listdir(os.path.join(self.data_folder, cell_type, resolution, path, 'MAPQGE30')):
                             if f.endswith('.npy'):
                                 self.data_dict[resolution][cell_type].append(os.path.join(self.data_folder, cell_type, resolution, path, 'MAPQGE30', f))

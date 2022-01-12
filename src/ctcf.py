@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 def bedPicks(file, chrom, resolution):
     
@@ -8,7 +7,7 @@ def bedPicks(file, chrom, resolution):
     df.columns = header[:len(df.columns)]
     l_peak = []                               #to store pairs (chromStart, chromEnd) for a specific chrom
     
-    #delete non useful columns 
+    #delete unuseful columns 
     if set(df['name'])=={'.'}:
         del df['name']
     if set(df['strand'])=={'.'}:
@@ -20,11 +19,25 @@ def bedPicks(file, chrom, resolution):
     df = df[df['chrom']==chrom]
     df = df.sort_values(by = 'chStart')
     
-    #just some tests for a eventual filter 
-    score = np.array(df['sigValue'])
-    #print(score.mean(), score.min(), score.max()) 
-    index = df.index.tolist()
-    for ctcf in index:
-        l_peak.append(int(round(df['chStart'][ctcf]/resolution, 0)))
-        l_peak.append(int(round(df['chEnd'][ctcf]/resolution, 0)))
-    return list(set(l_peak))
+    l_sigValue = []
+    for ctcf in df.index.tolist():
+        locus = int(round(df['chStart'][ctcf]/resolution, 0))
+        if locus not in l_peak:
+            l_peak.append(locus)
+            l_sigValue.append(df['sigValue'][ctcf])
+    return l_peak, l_sigValue
+
+def evaluate(TADs, ctcf):
+    a=0
+    b=[]
+    c=set()
+    for tad in TADs:
+        if tad[0] in ctcf and tad[0] not in b:
+            a+=1
+            b.append(tad[0])
+        if tad[1] in ctcf and tad[1] not in b:
+            a+=1
+            b.append(tad[1])
+        c.add(tad[0])
+        c.add(tad[1])
+    return round(a/max(1,len(c)), 4)*100

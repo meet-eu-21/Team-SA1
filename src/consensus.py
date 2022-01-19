@@ -9,30 +9,30 @@ def get_all_boundaries(TADs, gap):
         for tad in tads:
             for i in range(-gap, gap+1):
                 if tad[0]+i in dict_pos_score:
-                    dict_pos_score[tad[0]+i]+=score[key]*(1/(abs(i)+1))
+                    dict_pos_score[tad[0]+i]+=score[key]*(1/(abs(i)+2))
                 else:
                     dict_pos_score[tad[0]+i]=score[key]*(1/(abs(i)+1))
     return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
-def construct_tads(dict_pos_score, lim, threshold):
+def construct_tads(dict_pos_score, lim_max, threshold):
     dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score>threshold}
     pos = list(dict_pos_score.keys())
     score = list(dict_pos_score.values())
     output = {}
     for i in range(len(pos)-1):
-        if pos[i+1]-pos[i]>lim:
+        if pos[i+1]-pos[i]>lim_max:
             continue
         output[(pos[i], pos[i+1])]=score[i]+score[i+1]
     return output
 
-def consensus(all_tads, resolution, threshold, gap=200000, lim=3000000):
-    lim = int(lim/resolution)
+def consensus(all_tads, resolution, threshold, gap=200000, lim_max=3000000):
+    lim_max = int(lim_max/resolution)
     extended_lists = []
     for method,list_i in all_tads.items():
         all_tads[method] = sorted(set(list_i))
     gap = int(gap/resolution)
     dico = get_all_boundaries(all_tads, gap)
-    output = construct_tads(dico, lim, threshold)
+    output = construct_tads(dico, lim_max, threshold)
     return output
 
 def compare_TADs(obs, trues, gap):

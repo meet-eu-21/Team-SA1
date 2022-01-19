@@ -39,12 +39,12 @@ def preprocess_data(folder, resolution):
     logging.info('===================================================================================')
     logging.info('\tPreprocessing of folder {} started...'.format(folder))
     for f in os.listdir(folder):
-        if f.endswith('.RAWobserved'):
+        if f.endswith('.RAWobserved.txt'):
             m = load_hic(os.path.join(folder, f), resolution=resolution)
             # put the matrix in a numpy file
-            np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
+            np.save(os.path.join(folder, f.replace(".RAWobserved.txt",".npy")), m)
             # put the matrix in a .txt (for TADtree)
-            np.savetxt(os.path.join(folder, f.replace(".RAWobserved",".txt")), m, delimiter=' ', fmt='%d')
+            np.savetxt(os.path.join(folder, f.replace(".RAWobserved.txt",".txt")), m, delimiter=' ', fmt='%d')
             logging.info('Preprocessing: file {} preprocessed'.format(f))
         else:
             logging.info('Preprocessing: file {} skipped'.format(f))

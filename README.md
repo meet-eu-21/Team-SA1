@@ -23,7 +23,7 @@ The primary goal of this project is thus the improvement and analysis of TAD cal
 - Reimplementing various TAD detection algorithms such as TopDom, TAD tree, and Tadbit under python.
 - Comparing the output TADs between them and with other ones such as TADs produced by the Arrow-Head algorithm to create consensus TADs.
 - Using a scoring system that aims to make the whole process more precise.
-- Developing a TAD length analysis method to help with the scoring system and maybe try to predict the distribution of TAD lengths later on.
+- Developing a TAD length analysis method to help with the scoring system and maybe try to predict the distribution of TAD lengths later on (This part is very experimental and we hope more qualified researchers can use it as first step for a new method).
 - Tunning every functions to secure the best performances.
 
 ## Ongoing work

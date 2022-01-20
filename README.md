@@ -19,6 +19,13 @@ DNA is commonly referred to as the "building block" of life; it is organised int
 A TAD can be considered the basic unit of chromosome folding - they are the result of DNA compaction through the action of histones, causing bases that are not in sequential proximity to end up in local proximity.
 The primary goal of this project is thus the improvement and analysis of TAD calling tools, algorithms and pipelines from Hi-C sequencing data; we strive to present our results in a clear enough way to hopefully contribute towards this as of yet still ongoing field of research in bioinformatics.
 
+### We did it by:
+- Reimplementing various TAD detection algorithms such as TopDom, TAD tree, and Tadbit under python.
+- Comparing the output TADs between them and with other ones such as TADs produced by the Arrow-Head algorithm to create consensus TADs.
+- Using a scoring system that aims to make the whole process more precise.
+- Developing a TAD length analysis method to help with the scoring system and maybe try to predict the distribution of TAD lengths later on.
+- Tunning every functions to secure the best performances.
+
 ## Ongoing work
 - Topdom [Publication](https://pubmed.ncbi.nlm.nih.gov/26704975/) and [code](https://github.com/HenrikBengtsson/TopDom), originally coded in R and recoded in Python by the team. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/arrow--v2.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
 - TADTree [Publication](https://academic.oup.com/bioinformatics/article/32/11/1601/1742546?login=true) and [code](https://github.com/raphael-group/TADtree), coded in Python and adapted for our use. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/> 
@@ -38,16 +45,34 @@ The primary goal of this project is thus the improvement and analysis of TAD cal
 **This part needs to be updated**
 
 The respective folders for this GitHub are:
-- Arrowhead
-- TADTree
-- Topdom
-- tutorial_notebook
-- ... and more
+- Data: contains all the HiC raw datas for the different types of cells we studied at different resolutions, plus already detected TADs from the Arrow-Head method. 
+- src: contains the different python scripts that are used for our project.
+- Results: contains illustrations of our work.
 
 ## Code and libraries, dependencies examples (tbd)
+For preprocessing and TAD recognition:
 ```python
 import numpy as np
 import liam_method as lm
+from matplotlib.colors import Normalize
+from matplotlib.patches import Rectangle
+from src.utils import SCN
+import pandas as pd
+import os, time, logging
+from sklearn.preprocessing import scale
+from scipy import stats
+from scipy.stats import ranksums
+from abc import ABC, abstractmethod
+```
+For TADs length analysis:
+```python
+import numpy as np
+import glob
+import urllib3
+from lmfit.models import GaussianModel
+from math import *
+import matplotlib.pyplot as plt
+import os
 ```
 `topdom` `arrowhead` `tadtree` `tadtool` `hictool`
 

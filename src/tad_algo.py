@@ -3,6 +3,7 @@ import pandas as pd
 import os, time, logging
 from scipy import stats
 from scipy.stats import ranksums
+from pytadbit.tadbit import tadbit # Only on Linux
 
 from abc import ABC, abstractmethod
 
@@ -186,3 +187,35 @@ class TADtree(TADsDetector):
         os.system('python '+path_to_TADtree+' '+os.path.join(folder_path, 'control_file.txt'))
         os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
         return chrom_name
+
+class OnTAD(TADsDetector):
+    def getTADs(self, hic_obj, min_size=100000, max_size=3000000, penalty=0.1, ldiff=1.96, wsize=100000, log2=False):
+        folder_path = hic_obj.get_folder()
+        chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
+        lsize = int(wsize/hic_obj.resolution)
+        maxsz = int(max_size/hic_obj.resolution)
+        minsz = int(min_size/hic_obj.resolution)
+        if log2:
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}_log2.ontad".format(penalty)))
+        else:
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}.ontad".format(penalty)))
+        if not os.path.isfile(chrom_tad_output):
+            data_file = os.path.join(folder_path, chrom_data_filename)
+            self.runSingleTAD(data_file, chrom_tad_output, maxsz=maxsz, minsz=minsz, penalty=penalty, ldiff=ldiff, lsize=lsize, log2=log2)
+        tads = []
+        # startpos  endpos  TADlevel  TADmean  TADscore
+        with open(chrom_tad_output, 'r') as f:
+            tad_lines = f.readlines()    
+            for line in tad_lines:
+                start, end, level, mean, score = line.strip().split('\t')
+                tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
+        return tads
+
+    def runSingleTAD(self, in_file, out_file, maxsz, minsz, penalty, ldiff, lsize, log2):
+        # TODO: Check parameters
+        if log2:
+            os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -log2 -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
+        else:
+            os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
+
+

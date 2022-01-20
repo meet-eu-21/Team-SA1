@@ -219,3 +219,8 @@ class OnTAD(TADsDetector):
             os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
 
 
+class TADbit(TADsDetector):
+    def getTADs(self, hic_obj, max_size=3000000):
+        max_size /= hic_obj.resolution
+        return tadbit(hic_obj.original_matrix, n_cpus='max', max_tad_size=max_size)
+

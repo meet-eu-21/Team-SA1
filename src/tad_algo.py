@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
 import os, time, logging
+import json
 from scipy import stats
 from scipy.stats import ranksums
-from pytadbit.tadbit import tadbit # Only on Linux
+import pytadbit.tadbit as pytadbit # Only on Linux
 
 from abc import ABC, abstractmethod
 
@@ -223,7 +224,27 @@ class OnTAD(TADsDetector):
 
 
 class TADbit(TADsDetector):
-    def getTADs(self, hic_obj, max_size=3000000):
-        max_size /= hic_obj.resolution
-        return tadbit(hic_obj.original_matrix, n_cpus='max', max_tad_size=max_size)
+    def getTADs(self, hic_obj, max_size=3000000, score_threshold=None):
+        folder_path = hic_obj.get_folder()
+        if not os.path.isdir(os.path.join(folder_path, 'TADbit')):
+            os.mkdir(os.path.join(folder_path, 'TADbit'))
+        out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
+        if not os.path.isfile(os.path.join(folder_path, 'TADbit', out_file)):
+            self.runSingleTAD(hic_obj, max_size=max_size)
+        with open(os.path.join(folder_path, 'TADbit', out_file), "r+") as f:
+            results = json.load(f)
+        assert len(results['start']) == len(results['end']) and len(results['start']) == len(results['score'])
+        tads = []
+        for start, end, score in zip(results['start'], results['end'], results['score']):
+            if not score_threshold or score >= score_threshold:
+                tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
+        return tads
 
+    def runSingleTAD(self, hic_obj, max_size):
+        max_size = int(max_size/hic_obj.resolution)
+        folder_path = hic_obj.get_folder()
+        chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
+        results = pytadbit(os.path.join(folder_path, chrom_data_filename), n_cpus='max', max_tad_size=max_size)
+        out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
+        with open(os.path.join(folder_path, 'TADbit', out_file), "w") as f:
+            json.dump(results, f)

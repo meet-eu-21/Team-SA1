@@ -195,19 +195,22 @@ class OnTAD(TADsDetector):
         lsize = int(wsize/hic_obj.resolution)
         maxsz = int(max_size/hic_obj.resolution)
         minsz = int(min_size/hic_obj.resolution)
+        if not os.path.isdir(os.path.join(folder_path, 'OnTAD')):
+            os.mkdir(os.path.join(folder_path, 'OnTAD'))
         if log2:
-            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}_log2.ontad".format(penalty)))
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}_log2".format(penalty)))
         else:
-            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}.ontad".format(penalty)))
-        if not os.path.isfile(chrom_tad_output):
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}".format(penalty)))
+        if not os.path.isfile(chrom_tad_output + '.tad'):
             data_file = os.path.join(folder_path, chrom_data_filename)
             self.runSingleTAD(data_file, chrom_tad_output, maxsz=maxsz, minsz=minsz, penalty=penalty, ldiff=ldiff, lsize=lsize, log2=log2)
         tads = []
         # startpos  endpos  TADlevel  TADmean  TADscore
-        with open(chrom_tad_output, 'r') as f:
+        with open(chrom_tad_output + '.tad', 'r') as f:
             tad_lines = f.readlines()    
             for line in tad_lines:
                 start, end, level, mean, score = line.strip().split('\t')
+                start, end, level, mean, score = int(start), int(end), int(level), float(mean), float(score)
                 tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
         return tads
 

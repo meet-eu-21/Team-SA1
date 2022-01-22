@@ -239,7 +239,7 @@ class HiCDataset:
                         self.data_count[resolution][cell_type] += 1
                         self.all_count += 1
                     elif os.path.isdir(os.path.join(self.data_folder, cell_type, resolution, path)):
-                        if path == 'TADtree_outputs':
+                        if 'TADtree' in path or 'OnTAD' in path or 'TADbit' in path:
                             continue
                         for f in os.listdir(os.path.join(self.data_folder, cell_type, resolution, path, 'MAPQGE30')):
                             if f.endswith('.npy'):

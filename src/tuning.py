@@ -168,7 +168,7 @@ def tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35), 'log2': (T
             raise ValueError('File name {} was unexpected'.format(f))
     
     if 'penalty' in param_ranges:
-        penalty_range = range(param_ranges['penalty'][0], param_ranges['penalty'][1], 0.05) # Step of 0.05
+        penalty_range = np.arange(param_ranges['penalty'][0], param_ranges['penalty'][1], 0.05) # Step of 0.05
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(penalty_range), len(set_25kb))), np.zeros((len(penalty_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(penalty_range), len(set_100kb))), np.zeros((len(penalty_range), len(set_100kb)))
@@ -268,7 +268,7 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
             raise ValueError('File name {} was unexpected'.format(f))
     
     if 'score_threshold' in param_ranges:
-        score_threshold_range = range(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1], 0.5) # Step of 0.5
+        score_threshold_range = np.arange(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1], 0.5) # Step of 0.5
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(score_threshold_range), len(set_25kb))), np.zeros((len(score_threshold_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(score_threshold_range), len(set_100kb))), np.zeros((len(score_threshold_range), len(set_100kb)))

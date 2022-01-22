@@ -265,7 +265,7 @@ class HiCDataset:
         self.development_set = []
         self.test_set = []
 
-        random.seed(seed)
+        random.seed(seed) # Fix seed to assure reproducibility
 
         for resolution in self.resolutions:
             for cell_type in self.cell_types:

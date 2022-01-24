@@ -221,8 +221,8 @@ def tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35), 'log2': (T
                     ontad = OnTAD()
                     ontad_tads = ontad.getTADs(hic_mat, log2=log2)
                     _, _, gt_rate_ontad, pred_rate_ontad = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=ontad_tads, gap=200000)
-                    gt_rates_25kb[i,j] = gt_rate_ontad
-                    pred_rates_25kb[i,j] = pred_rate_ontad
+                    gt_rates_25kb[j] = gt_rate_ontad
+                    pred_rates_25kb[j] = pred_rate_ontad
                 results_df.loc[((results_df.resolution==25000) & (results_df.log2==log2)), 'gt_rates'] = gt_rates_25kb.mean(axis=0)
                 results_df.loc[((results_df.resolution==25000) & (results_df.log2==log2)), 'pred_rates'] = pred_rates_25kb.mean(axis=0)
 
@@ -232,8 +232,8 @@ def tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35), 'log2': (T
                     ontad = OnTAD()
                     ontad_tads = ontad.getTADs(hic_mat, log2=log2)
                     _, _, gt_rate_ontad, pred_rate_ontad = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=ontad_tads, gap=200000)
-                    gt_rates_100kb[i,j] = gt_rate_ontad
-                    pred_rates_100kb[i,j] = pred_rate_ontad
+                    gt_rates_100kb[j] = gt_rate_ontad
+                    pred_rates_100kb[j] = pred_rate_ontad
                 results_df.loc[((results_df.resolution==100000) & (results_df.log2==log2)), 'gt_rates'] = gt_rates_100kb.mean(axis=0)
                 results_df.loc[((results_df.resolution==100000) & (results_df.log2==log2)), 'pred_rates'] = pred_rates_100kb.mean(axis=0)
         print('\OnTAD tuning - plotting')

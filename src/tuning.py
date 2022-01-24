@@ -261,7 +261,8 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
     set_100kb = []
     for f in development_set:
         if '25kb' in f:
-            set_25kb.append(f)
+            # set_25kb.append(f) # Disabled because of heavy computation
+            pass
         elif '100kb' in f:
             set_100kb.append(f)
         else:

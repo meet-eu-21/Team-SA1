@@ -226,3 +226,5 @@ __pycache__/*.*
 
 # datasets
 data/
+
+test.*

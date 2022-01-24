@@ -236,7 +236,7 @@ class TADbit(TADsDetector):
         assert len(results['start']) == len(results['end']) and len(results['start']) == len(results['score'])
         tads = []
         for start, end, score in zip(results['start'], results['end'], results['score']):
-            if not score_threshold or score >= score_threshold:
+            if not score_threshold or (score and score >= score_threshold):
                 tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
         return tads
 

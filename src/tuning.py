@@ -308,3 +308,30 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
         ax2.set_title('TADbit on 100kb intrachromosomal HiC data')
         ax2.legend()
         plt.savefig('figures/tune_tadbit_score_threshold{}-{}.png'.format(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1]))
+
+
+
+def precompute_all_data(set):
+    logging.info('Processing all algo on intrachromosomal HiC data')
+    set_25kb = []
+    set_100kb = []
+    for f in set:
+        if '25kb' in f:
+            set_25kb.append(f)
+        elif '100kb' in f:
+            set_100kb.append(f)
+        else:
+            raise ValueError('File name {} was unexpected'.format(f))
+
+    with contextlib.redirect_stdout(io.StringIO()) as f:
+        for i, f_25kb in enumerate(tqdm(set_25kb)):
+            hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
+            ontad = OnTAD()
+            ontad_tads = ontad.getTADs(hic_mat)
+        for j, f_100kb in enumerate(tqdm(set_100kb)):
+            hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
+            tadtree = TADtree()
+            tadtree_tads = tadtree.getTADs(hic_mat)
+            hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
+            tadbit = TADbit()
+            tadbit_tads = tadbit.getTADs(hic_mat)

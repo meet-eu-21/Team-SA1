@@ -14,7 +14,14 @@ class TADsDetector(ABC):
         pass
 
 class TopDom(TADsDetector):
-    def getTADs(self, hic_obj, window=5):
+    def getTADs(self, hic_obj, window=None):
+        if not window:
+            if hic_obj.resolution == 25000:
+                window = 4
+            elif hic_obj.resolution == 100000:
+                window = 2
+            else:
+                raise Exception("Window size not specified and resolution not supported. Please specify window size.")
         # Run different steps of the algorithm
         binsignal = self.TopDomStep1(hic_obj.original_matrix, window)
         binextremums = self.TopDomStep2(hic_obj.regions, binsignal, window)

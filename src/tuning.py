@@ -326,12 +326,21 @@ def precompute_all_data(set):
     with contextlib.redirect_stdout(io.StringIO()) as f:
         for i, f_25kb in enumerate(tqdm(set_25kb)):
             hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
-            ontad = OnTAD()
-            ontad_tads = ontad.getTADs(hic_mat)
+            try:
+                ontad = OnTAD()
+                ontad_tads = ontad.getTADs(hic_mat)
+            except:
+                print('Ontad failed on {}'.format(f_25kb))
         for j, f_100kb in enumerate(tqdm(set_100kb)):
             hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
-            tadtree = TADtree()
-            tadtree_tads = tadtree.getTADs(hic_mat)
+            try:
+                tadtree = TADtree()
+                tadtree_tads = tadtree.getTADs(hic_mat)
+            except:
+                print('TADtree failed on {}'.format(f_100kb))
             hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
-            tadbit = TADbit()
-            tadbit_tads = tadbit.getTADs(hic_mat)
+            try:
+                tadbit = TADbit()
+                tadbit_tads = tadbit.getTADs(hic_mat)
+            except:
+                print('TADbit failed on {}'.format(f_100kb))

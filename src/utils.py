@@ -25,7 +25,10 @@ def SCN(D, max_iter = 10):
 	return (D + D.T)/2 # To make matrix symetric again
 
 def chrom_name_to_variables(chrom_name):
-	chrom = chrom_name[:4]
+	len_path = len(chrom_name.split(os.path.sep))
+	chrom = chrom_name.split(os.path.sep)[len_path-1][:4]
+	if chrom[:3] != 'chr':
+		raise ValueError('Chromosome name should start with "chr"')
 	cell_type = None
 	for ct in ['GM12878', 'HMEC', 'HUVEC', 'IMR90', 'NHEK']:
 		if ct in chrom_name:

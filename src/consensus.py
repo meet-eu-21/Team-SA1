@@ -7,6 +7,14 @@ from src.data import load_hic_groundtruth
 from src.utils import chrom_name_to_variables
 from src.ctcf import bedPicks, checkCTCFcorrespondance
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit
+
+reference_scores = {
+        'tadtree':83.23,
+        'topdom':71.26,
+        'arrowhead':78.58
+    }
+reference_resolution = 25000
+
 def get_all_boundaries(TADs, gap):
     score = {
         'tadtree':83.23,
@@ -57,13 +65,13 @@ def compare_TADs(obs, trues, gap):
             if in_trues:
                 in_trues=False
                 break
-    return counter/len(obs)    def get_consensus(self, TADs):
+    return counter/len(obs)
 
 class ConsensusMethod(ABC):
     def get_consensus(self, TADs):
         pass
 
-class ScoreConsensus(ConsensusMethod):
+class BordersConsensus(ConsensusMethod):
     def __init__(self) -> None:
         self.ctcf = {
                 'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',

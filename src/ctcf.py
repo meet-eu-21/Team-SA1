@@ -2,6 +2,20 @@ import pandas as pd
 
 def bedPicks(file, chrom, resolution):
     
+def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
+    tads_borders_ctcf = set()
+    all_borders = set()
+    for i, tad in enumerate(tads):
+        for j, ctcf in ctcf_df.iterrows():
+            all_borders.add(tad[0])
+            all_borders.add(tad[1])
+            if abs(ctcf['chStart'] - tad[0]) <= ctcf_allowed_distance:
+                tads_borders_ctcf.add(tad[0])
+            if abs(ctcf['chStart'] - tad[1]) <= ctcf_allowed_distance:
+                tads_borders_ctcf.add(tad[1])
+    return round(len(tads_borders_ctcf)/max(1,len(all_borders)), 4)
+
+
     df = pd.read_csv(file, sep='\t', comment = 't', header=None)
     header = ['chrom', 'chStart', 'chEnd', 'name', 'score', 'strand', 'sigValue', 'pValue', 'qValue', 'peak']
     df.columns = header[:len(df.columns)]

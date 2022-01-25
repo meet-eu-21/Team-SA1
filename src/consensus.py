@@ -126,3 +126,44 @@ class ScoreConsensus(ConsensusMethod):
             all_tads[method] = sorted(set(list_i))
         scores_dic = self.get_boundaries(all_tads, resolution, ctcf_width_region)
         return construct_tads(scores_dic, lim, threshold)
+
+    def evaluateAlgorithmScore(self, development_set):
+        # TODO: Save scores in a file and reload them next time
+        logging.info('Tuning TopDom on intrachromosomal HiC data')
+        set_25kb = []
+        set_100kb = []
+        for f in development_set:
+            if '25kb' in f:
+                set_25kb.append(f)
+            elif '100kb' in f:
+                set_100kb.append(f)
+            else:
+                raise ValueError('File name {} was unexpected'.format(f))
+
+        ctcf_scores_25kb = {algo: [] for algo in self.algo_scores.keys()}
+        ctcf_scores_100kb = {algo: [] for algo in self.algo_scores.keys()}
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            for algo in self.algo_scores.keys():
+                if algo in self.algo_usage[25000]:
+                    for j, f_25kb in enumerate(set_25kb):                    
+                        hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
+                        tad_caller = algo()
+                        tads = tad_caller.getTADs(hic_mat)
+                        chrom, cell_type = chrom_name_to_variables(f_25kb)
+                        ctcf_peaks = bedPicks(self.ctcf[cell_type], chrom)
+                        ctcf_scores_25kb[algo].append(checkCTCFcorrespondance(ctcf_peaks, tads))
+                if algo in self.algo_usage[100000]:
+                    for j, f_100kb in enumerate(set_100kb):
+                        hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
+                        tad_caller = algo()
+                        tads = tad_caller.getTADs(hic_mat)
+                        chrom, cell_type = chrom_name_to_variables(f_100kb)
+                        ctcf_peaks = bedPicks(self.ctcf[cell_type], chrom)
+                        ctcf_scores_100kb[algo].append(checkCTCFcorrespondance(ctcf_peaks, tads))
+        print(ctcf_scores_25kb)
+        print(ctcf_scores_100kb)
+        for algo in self.algo_scores.keys():
+            if algo in self.algo_usage[25000]:
+                self.algo_scores[algo][25000] = np.mean(ctcf_scores_25kb[algo])
+            if algo in self.algo_usage[100000]:
+                self.algo_scores[algo][100000] = np.mean(ctcf_scores_100kb[algo])

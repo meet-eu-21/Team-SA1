@@ -1,7 +1,6 @@
 import pandas as pd
 
-def bedPicks(file, chrom, resolution):
-    
+
 def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
     tads_borders_ctcf = set()
     all_borders = set()
@@ -16,6 +15,7 @@ def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
     return round(len(tads_borders_ctcf)/max(1,len(all_borders)), 4)
 
 
+def bedPicks(file, chrom):
     df = pd.read_csv(file, sep='\t', comment = 't', header=None)
     header = ['chrom', 'chStart', 'chEnd', 'name', 'score', 'strand', 'sigValue', 'pValue', 'qValue', 'peak']
     df.columns = header[:len(df.columns)]
@@ -31,15 +31,15 @@ def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
         
     #we take into account data for a specific chromosome 
     df = df[df['chrom']==chrom]
-    df = df.sort_values(by = 'chStart')
+    return df.sort_values(by = 'chStart')
     
-    l_sigValue = []
-    for ctcf in df.index.tolist():
-        locus = int(round(df['chStart'][ctcf]/resolution, 0))
-        if locus not in l_peak:
-            l_peak.append(locus)
-            l_sigValue.append(df['sigValue'][ctcf])
-    return l_peak, l_sigValue
+    # l_sigValue = []
+    # for ctcf in df.index.tolist():
+    #     locus = int(df['chStart'][ctcf])
+    #     if locus not in l_peak:
+    #         l_peak.append(locus)
+    #         l_sigValue.append(df['sigValue'][ctcf])
+    # return l_peak, l_sigValue
 
 def evaluate(TADs, ctcf):
     a=0

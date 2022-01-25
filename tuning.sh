@@ -7,12 +7,14 @@ from src.data import HiCDataset
 import src.utils
 import src.metrics
 import src.tad_algo
-from src.tuning import tune_topdom, tune_tadtree, tune_ontad, tune_tadbit
+from src.tuning import tune_topdom, tune_tadtree, tune_ontad, tune_tadbit, precompute_all_data
 
 print('Init dataset')
 dataset = HiCDataset(data_folder='data')
 dataset.build_data_dict()
 development_set, test_set = dataset.split(dev_ratio = 0.7, test_ratio=0.3)
+precompute_all_data(development_set)
+precompute_all_data(test_set)
 
 # print('\nTuning TopDom...')
 # print('\tParameter window')
@@ -24,15 +26,15 @@ development_set, test_set = dataset.split(dev_ratio = 0.7, test_ratio=0.3)
 # print('\tParameter p')
 # tune_tadtree(development_set, param_ranges={'p': (2,5)})
 
-print('\nTuning OnTAD...')
-print('\tParameter penalty')
-tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35)})
-print('\tParameter log2')
-tune_ontad(development_set, param_ranges={'log2': (True,False)})
+# print('\nTuning OnTAD...')
+# print('\tParameter penalty')
+# tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35)})
+# print('\tParameter log2')
+# tune_ontad(development_set, param_ranges={'log2': (True,False)})
 
-print('\nTuning TADbit...')
-print('\tParameter score_threshold')
-tune_tadbit(development_set)
+# print('\nTuning TADbit...')
+# print('\tParameter score_threshold')
+# tune_tadbit(development_set)
 
-print('\nTuning finished!')
+# print('\nTuning finished!')
 END

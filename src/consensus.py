@@ -1,3 +1,12 @@
+from abc import ABC
+import logging, os, tqdm, io, contextlib
+import numpy as np
+
+
+from src.data import load_hic_groundtruth
+from src.utils import chrom_name_to_variables
+from src.ctcf import bedPicks, checkCTCFcorrespondance
+from src.tad_algo import TopDom, TADtree, OnTAD, TADbit
 def get_all_boundaries(TADs, gap):
     score = {
         'tadtree':83.23,
@@ -48,4 +57,28 @@ def compare_TADs(obs, trues, gap):
             if in_trues:
                 in_trues=False
                 break
-    return counter/len(obs)
+    return counter/len(obs)    def get_consensus(self, TADs):
+        pass
+
+class ScoreConsensus(ConsensusMethod):
+    def __init__(self) -> None:
+        self.ctcf = {
+                'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',
+                'HMEC':'data/CTCF/HMEC/ENCFF059YXD.bed',
+                'HUVEC':'data/CTCF/HUVEC/ENCFF949KVG.bed',
+                'IMR90':'data/CTCF/IMR90/ENCFF203SRF.bed',
+                'NHEK':'data/CTCF/NHEK/ENCFF351YOQ.bed'
+            }
+        # TODO: Use algos for some resolution only
+
+        # Implement score as CTCF*(M_1 + M2)
+        self.algo_scores = {
+                TADtree: {25000: np.NaN, 100000: np.NaN},
+                TopDom: {25000: np.NaN, 100000: np.NaN},
+                'arrowhead': np.NaN, # Check Ground Truth
+                OnTAD: {25000: np.NaN, 100000: np.NaN}, # TODO: Check OnTAD issue on 100kb
+                TADbit: {25000: np.NaN, 100000: np.NaN} # TODO: Check TADbit performance
+        }
+
+        self.algo_usage = {25000: [TopDom, OnTAD], 100000: [TopDom, TADtree, TADbit]}
+

@@ -4,7 +4,7 @@ import os, time, logging
 import json
 from scipy import stats
 from scipy.stats import ranksums
-import pytadbit.tadbit as pytadbit # Only on Linux
+# import pytadbit.tadbit as pytadbit # Only on Linux
 
 from abc import ABC, abstractmethod
 
@@ -135,7 +135,7 @@ class TopDom(TADsDetector):
 
 
 class TADtree(TADsDetector):
-    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=3, q=12, gamma=500, N=500):
+    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=2, q=12, gamma=500, N=500):
         if not os.path.isfile(path_to_TADtree):
             raise Exception("TADtree.py not found")
         if hic_obj.resolution != 100000:

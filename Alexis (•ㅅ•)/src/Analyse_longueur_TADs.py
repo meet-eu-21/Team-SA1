@@ -7,8 +7,8 @@ GSE63525_NHEK_Arrowhead_domainlist.txt
 """
 import os
 #Make sure you have run the Simon's preprocess algorithm in the folder you're using
-path="C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Alexis (•ㅅ•)"
-os.chdir(path)
+#path="C:\\Users\\Alexis Trang\\Documents\\Cours_UPMC_M2\\MEET-U\\Alexis (•ㅅ•)"
+#os.chdir(path)
 import glob
 
 from src.data import *
@@ -63,6 +63,26 @@ def extraction_data_TD(topdom_tads):         ########## PLOT FOR TOP DOM
     return l_long,l_count,dico_long,esp,var,std
 
 
+def extraction_data_TT(name_file, res):
+    l_long=[]
+    l_count=[]
+    dico_long={}
+
+    file=np.loadtxt(name_file,dtype='str')
+    file=np.array(file)
+    tadtree_tads_lengths=file[1:,2].astype(int)*res-file[1:,1].astype(int)*res
+
+    for i in tadtree_tads_lengths:
+        if i in dico_long.keys():
+            dico_long[i]+=1
+        else:
+            dico_long[i]=1
+    l_long=list(dico_long.keys())
+    l_long.sort()
+    for j in l_long:
+        l_count.append(dico_long[j])
+    esp,var,std=np.mean(l_long),np.nanvar(l_long),np.nanstd(l_long)
+    return l_long,l_count,dico_long,esp,var,std
 
 
 def Histo_sizes_TADs(l_long,l_count):                ############# PLOT HIST

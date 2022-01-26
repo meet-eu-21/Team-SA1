@@ -17,7 +17,7 @@ import glob
 def Gaussian_function(x,A,mu,sigma):
     return (A/(sigma*sqrt(2*pi)))*exp(-((x-mu)**2)/(2*sigma)**2)
 
-
+#fitting_curve_cole_folder does exactly  the same thing as fitting_curve_single_file, but on a whole folder.
 def fitting_curve_whole_folder(folder_path,TADs_method,resolution=25000): #TADs_method should be either "TD" (if your file is to be analysed by TopDom) or "AH" (of analysed by ArrowHead).
     count = 0
     dico_long = {}
@@ -34,6 +34,9 @@ def fitting_curve_whole_folder(folder_path,TADs_method,resolution=25000): #TADs_
                         dico_long[j]+=dico_step[j]
                     else:
                         dico_long[j]=dico_step[j]
+            l_path=folder_path.split("/")
+            lign,res=l_path[-2],re.search(r"[\d]+kb",l_path[-1]).group()
+            Title="Gaussian fitting curve for TopDom TADs, "+res+" resolution,"+" in "+lign+"chrall."
                                                       #of TADs for
     elif TADs_method=="AH":                           #each sizes detected
 
@@ -46,6 +49,14 @@ def fitting_curve_whole_folder(folder_path,TADs_method,resolution=25000): #TADs_
                     dico_long[j]+=dico_step[j]
                 else:
                     dico_long[j]=dico_step[j]
+        Title="Gaussian fitting curve for ArrowHead TADs, 5kb resolution."
+
+    elif TADs_method=="TT":
+        data_step=extraction_data_TT(file_path,resolution)
+        dico_long=data_step[2]
+        Title= "Gaussian fitting curve of TADtree, "+str(int(resolution/1000))+"kb resolution, in "+Name_of_cells+"."
+        name=Name_of_cells+Chromosome
+
 
     l_long=list(dico_long.keys())
     l_long.sort()
@@ -72,7 +83,11 @@ def fitting_curve_whole_folder(folder_path,TADs_method,resolution=25000): #TADs_
 
     #plot of the comparison between empirical and predicted datas
     plt.plot(x, y, 'b.-')
+    plt.ylabel("Effectives",fontsize=25)
+    plt.xlabel("TAD sizes",fontsize=25)
     plt.plot(x,courbe,'g-')
+    plt.title(Title, fontsize=30)
+    plt.legend(["Observed TAD sizes","Created model"],fontsize=25)
     plt.show()
 
     opt=open("parametres_optimaux.txt","a")

@@ -168,22 +168,6 @@ class BordersConsensus(ConsensusMethod):
                 self.algo_scores[algo]['100000'] = (self.ctcf_coeff * ctcf_scores[algo]['100000']) * (self.metrics_coeff * sum(metrics_scores[algo]['100000']))
         with open(score_save_path, "w") as f:
             json.dump(self.algo_scores, f)
-
-
-
-    # def compute_ctcf_algo_score(self, algo, set, resolution):
-    #     if algo in self.algo_usage[resolution]:
-    #         ctcf_scores = []
-    #         for j, f in enumerate(set):
-    #             hic_mat, arrowhead_tads = load_hic_groundtruth(f, resolution)
-    #             tad_caller = algo()
-    #             tads = tad_caller.getTADs(hic_mat)
-    #             chrom, cell_type = chrom_name_to_variables(f)
-    #             ctcf_peaks = bedPicks(self.ctcf[cell_type], chrom)
-    #             ctcf_scores.append(checkCTCFcorrespondance(ctcf_peaks, tads))
-    #         return np.mean(ctcf_scores)
-    #     else:
-    #         return np.NaN
             
     def compute_ctcf_scores(self, development_set):
         logging.info('Computing CTCF scores on intrachromosomal HiC data')

@@ -8,6 +8,7 @@ from src.utils import chrom_name_to_variables
 from src.ctcf import bedPicks, checkCTCFcorrespondance
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit, TAD_class_to_str, str_to_TAD_class
 
+# Reference score for three methods (first scores)
 reference_scores = {
         'tadtree':83.23,
         'topdom':71.26,
@@ -15,6 +16,7 @@ reference_scores = {
     }
 reference_resolution = 25000
 
+# get the TADs boundaries of each method and give them a score
 def get_all_boundaries(TADs, gap):
     score = {
         'tadtree':83.23,
@@ -31,6 +33,7 @@ def get_all_boundaries(TADs, gap):
                     dict_pos_score[tad[0]+i]=score[key]*(1/(abs(i)+1))
     return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
+# construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
 def construct_tads(dict_pos_score, lim, threshold):
     dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score>threshold}
     pos = list(dict_pos_score.keys())
@@ -42,6 +45,7 @@ def construct_tads(dict_pos_score, lim, threshold):
         output[(pos[i], pos[i+1])]=score[i]+score[i+1]
     return output
 
+# Get the consensus from a dictionary associating methods to their TADs founds on a chromosome
 def consensus(all_tads, resolution, threshold, gap=200000, lim=3000000):
     lim = int(lim/resolution)
     extended_lists = []
@@ -52,6 +56,7 @@ def consensus(all_tads, resolution, threshold, gap=200000, lim=3000000):
     output = construct_tads(dico, lim, threshold)
     return output
 
+# Compare consensus TADs with ground_truth (first function)
 def compare_TADs(obs, trues, gap):
     counter=0
     in_trues=False
@@ -73,6 +78,7 @@ class ConsensusMethod(ABC):
 
 class BordersConsensus(ConsensusMethod):
     def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False) -> None:
+        # path to file containing CTCF positions
         self.ctcf = {
                 'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',
                 'HMEC':'data/CTCF/HMEC/ENCFF059YXD.bed',
@@ -91,14 +97,17 @@ class BordersConsensus(ConsensusMethod):
                 'TADbit': {'25000': np.NaN, '100000': np.NaN} # TODO: Check TADbit performance
         }
 
+        # used methods according to the resolution
         self.algo_usage = {'25000': ['TopDom', 'OnTAD'], '100000': ['TopDom', 'TADtree', 'TADbit']}
 
+        # weight of the CTCF metric and the both metrics which compare a method with the groundtruth
         self.ctcf_coeff = ctcf_coeff / ((ctcf_coeff + metrics_coeff) / 2)
         self.metrics_coeff = metrics_coeff / ((ctcf_coeff + metrics_coeff) / 2)
 
         if init:
             self.set_scores()
-
+    
+    # get the TADs boundaries of each method and give them a score
     def get_all_boundaries(self, all_algo_TADs, resolution, ctcf_width_region=4):
         dict_pos_score = {}
         for algo, tads in all_algo_TADs.items():
@@ -111,6 +120,7 @@ class BordersConsensus(ConsensusMethod):
                         dict_pos_score[idx_tad] = self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i)))
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
+    # construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
     def construct_tads(self, dict_pos_score, resolution, lim, min_size, threshold): # TODO: Tune threshold
         lim = round(lim/resolution)
         minsz = round(min_size/resolution)
@@ -140,6 +150,7 @@ class BordersConsensus(ConsensusMethod):
         #TODO: Implement min_tad_size
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
+    # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome    
     def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=50000, lim=3000000):
         all_tads = {}
         for algo in self.algo_scores.keys():
@@ -150,6 +161,7 @@ class BordersConsensus(ConsensusMethod):
                 all_tads[algo] = tad_caller.getTADs(hic_mat)
         return self.build_consensus(all_tads, hic_mat.resolution, threshold, ctcf_width_region, min_size, lim)
 
+    # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome 
     def build_consensus(self, all_tads, resolution, threshold, ctcf_width_region, min_size, lim):
         extended_lists = []
         for method,list_i in all_tads.items():

@@ -46,7 +46,6 @@ def evaluate_set(test_set):
         logging.info('Evaluating {}'.format(f_100kb))
         savefile = open(f_100kb.replace('npy', 'bananatads.txt'), 'w+')
         hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
-        consensus_method = BordersConsensus(init=True)
         consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat)
         _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
         savefile.write('TADs: {}\n'.format(consensus_tads))

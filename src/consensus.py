@@ -14,7 +14,7 @@ class ConsensusMethod(ABC):
         pass
 
 class BordersConsensus(ConsensusMethod):
-    def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False, check_filtered=True) -> None:
+    def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False, check_filtered=False) -> None:
         # path to file containing CTCF positions
         self.ctcf = {
                 'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',
@@ -97,12 +97,12 @@ class BordersConsensus(ConsensusMethod):
                         return False
         return True
 
-    def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=50000, max_tad_size=3000000):
+    def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
         #TODO: Implement min_tad_size
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
     # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome    
-    def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=50000, lim=3000000):
+    def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=125000, lim=3000000):
         all_tads = {}
         for algo in self.algo_scores.keys():
             if self.algo_scores[algo] == np.NaN:

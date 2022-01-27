@@ -476,30 +476,30 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,100,1)
         df1 = pd.DataFrame({'resolution':[25000 for i in range(2)], 'filtered_tads':[False, True], 'pred_rates':[0 for i in range(2)], 'gt_rates':[0 for i in range(2)]})
         df2 = pd.DataFrame({'resolution':[100000 for i in range(2)], 'filtered_tads':[False, True], 'pred_rates':[0 for i in range(2)], 'gt_rates':[0 for i in range(2)]})
         results_df = pd.concat([df1, df2])
-        for i, filter in enumerate(tqdm(filtered)):
-            print('BordersConsensus tuning - exclude_filtered_regions: {}'.format(filter))
+        for i, fil in enumerate(tqdm(filtered)):
+            print('BordersConsensus tuning - exclude_filtered_regions: {}'.format(fil))
             with contextlib.redirect_stdout(io.StringIO()) as f:
                 gt_rates_25kb, pred_rates_25kb = np.zeros(len(set_25kb)), np.zeros(len(set_25kb))
                 for j, f_25kb in enumerate(set_25kb):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
-                    consensus_method = BordersConsensus(init=True, check_filtered=filter)
+                    consensus_method = BordersConsensus(init=True, check_filtered=fil)
                     consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat)
                     _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
                     gt_rates_25kb[j] = gt_rate_consensus
                     pred_rates_25kb[j] = pred_rate_consensus
-                results_df.loc[((results_df.resolution==25000) & (results_df.filtered_tads==filter)), 'gt_rates'] = gt_rates_25kb.mean(axis=0)
-                results_df.loc[((results_df.resolution==25000) & (results_df.filtered_tads==filter)), 'pred_rates'] = pred_rates_25kb.mean(axis=0)
+                results_df.loc[((results_df.resolution==25000) & (results_df.filtered_tads==fil)), 'gt_rates'] = gt_rates_25kb.mean(axis=0)
+                results_df.loc[((results_df.resolution==25000) & (results_df.filtered_tads==fil)), 'pred_rates'] = pred_rates_25kb.mean(axis=0)
 
                 gt_rates_100kb, pred_rates_100kb = np.zeros(len(set_100kb)), np.zeros(len(set_100kb))
                 for j, f_100kb in enumerate(set_100kb):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
-                    consensus_method = BordersConsensus(init=True, check_filtered=filter)
+                    consensus_method = BordersConsensus(init=True, check_filtered=fil)
                     consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat)
                     _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
                     gt_rates_100kb[j] = gt_rate_consensus
                     pred_rates_100kb[j] = pred_rate_consensus
-                results_df.loc[((results_df.resolution==100000) & (results_df.filtered_tads==filter)), 'gt_rates'] = gt_rates_100kb.mean(axis=0)
-                results_df.loc[((results_df.resolution==100000) & (results_df.filtered_tads==filter)), 'pred_rates'] = pred_rates_100kb.mean(axis=0)
+                results_df.loc[((results_df.resolution==100000) & (results_df.filtered_tads==fil)), 'gt_rates'] = gt_rates_100kb.mean(axis=0)
+                results_df.loc[((results_df.resolution==100000) & (results_df.filtered_tads==fil)), 'pred_rates'] = pred_rates_100kb.mean(axis=0)
 
         print('\tBordersConsensus tuning - plotting')
         width=0.4

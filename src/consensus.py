@@ -72,7 +72,7 @@ class ConsensusMethod(ABC):
         pass
 
 class BordersConsensus(ConsensusMethod):
-    def __init__(self, ctcf_coeff=1, metrics_coeff=1) -> None:
+    def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False) -> None:
         self.ctcf = {
                 'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',
                 'HMEC':'data/CTCF/HMEC/ENCFF059YXD.bed',
@@ -93,13 +93,11 @@ class BordersConsensus(ConsensusMethod):
 
         self.algo_usage = {'25000': ['TopDom', 'OnTAD'], '100000': ['TopDom', 'TADtree', 'TADbit']}
 
-        self.ctcf_coeff = ctcf_coeff
-        self.metrics_coeff = metrics_coeff
+        self.ctcf_coeff = ctcf_coeff / ((ctcf_coeff + metrics_coeff) / 2)
+        self.metrics_coeff = metrics_coeff / ((ctcf_coeff + metrics_coeff) / 2)
 
-        score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
-        if os.path.isfile(score_save_path):
-            logging.info('BordersConsensus: Loading algo scores from backup file...')
-            self.algo_scores = json.load(open(score_save_path, "r"))
+        if init:
+            self.set_scores()
 
     def get_all_boundaries(self, all_algo_TADs, resolution, ctcf_width_region=4):
         dict_pos_score = {}
@@ -113,24 +111,36 @@ class BordersConsensus(ConsensusMethod):
                         dict_pos_score[idx_tad] = self.algo_scores[algo]['25000'] * (1/pow(2, abs(i)))
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
-    def construct_tads(self, dict_pos_score, resolution, lim, threshold): # TODO: Tune threshold
-        lim = int(lim/resolution)
+    def construct_tads(self, dict_pos_score, resolution, lim, min_size, threshold): # TODO: Tune threshold
+        lim = round(lim/resolution)
+        minsz = round(min_size/resolution)
+        assert lim>minsz
 
         dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score*100 >= threshold}
 
         positions = list(dict_pos_score.keys())
         output_tads = {}
         for i in range(len(positions)-1):
+            # control if tad is too large
             if positions[i+1]-positions[i] > lim:
                 continue
-            output_tads[(int(positions[i]*resolution), int(positions[i+1]*resolution))] = dict_pos_score[positions[i]] + dict_pos_score[positions[i+1]]
+
+            # control if tad is too small
+            next = 1
+            for j in range(i+1, len(positions)):
+                assert positions[j] - positions[i] >= 0
+                if positions[j] - positions[i] > minsz:
+                    break
+                next += 1
+            if i+next < len(positions):
+                output_tads[(int(positions[i]*resolution), int(positions[i+next]*resolution))] = dict_pos_score[positions[i]] + dict_pos_score[positions[i+next]]
         return output_tads
 
-    def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=100000, max_tad_size=3000000):
+    def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=50000, max_tad_size=3000000):
         #TODO: Implement min_tad_size
-        return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, max_tad_size).keys()]
+        return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
-    def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, lim=3000000):
+    def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=50000, lim=3000000):
         all_tads = {}
         for algo in self.algo_scores.keys():
             if self.algo_scores[algo] == np.NaN:
@@ -138,45 +148,64 @@ class BordersConsensus(ConsensusMethod):
             elif algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
                 tad_caller = str_to_TAD_class(algo)()
                 all_tads[algo] = tad_caller.getTADs(hic_mat)
-        return self.build_consensus(all_tads, hic_mat.resolution, threshold, ctcf_width_region, lim)
+        return self.build_consensus(all_tads, hic_mat.resolution, threshold, ctcf_width_region, min_size, lim)
 
-    def build_consensus(self, all_tads, resolution, threshold, ctcf_width_region, lim):
+    def build_consensus(self, all_tads, resolution, threshold, ctcf_width_region, min_size, lim):
         extended_lists = []
         for method,list_i in all_tads.items():
             all_tads[method] = sorted(set(list_i))
         scores_dic = self.get_all_boundaries(all_tads, resolution, ctcf_width_region)
-        return self.construct_tads(scores_dic, resolution, lim, threshold)
+        return self.construct_tads(scores_dic, resolution, lim, min_size, threshold)
 
     def evaluate_algorithm_score(self, development_set):
         logging.info('Evaluating algorithm scores')
         score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
         ctcf_scores_path = os.path.join('saves', 'ctcf_scores.json')
         metrics_scores_path = os.path.join('saves', 'metrics_scores.json')
-        if os.path.isfile(score_save_path):
-            self.algo_scores = json.load(open(score_save_path, "r"))
+        
+        if os.path.isfile(ctcf_scores_path):
+            ctcf_scores = json.load(open(ctcf_scores_path, "r"))
         else:
-            if os.path.isfile(ctcf_scores_path):
-                ctcf_scores = json.load(open(ctcf_scores_path, "r"))
-            else:
-                ctcf_scores = self.compute_ctcf_scores(development_set)
-                with open(ctcf_scores_path, "w") as f:
-                    json.dumps(ctcf_scores, f)
+            ctcf_scores = self.compute_ctcf_scores(development_set)
+            with open(ctcf_scores_path, "w") as f:
+                json.dumps(ctcf_scores, f)
 
-            if os.path.isfile(metrics_scores_path):
-                metrics_scores = json.load(open(metrics_scores_path, "r"))
-            else:
-                metrics_scores = self.compute_metrics_scores(development_set)
-                with open(metrics_scores_path, "w") as f:
-                    json.dump(metrics_scores, f)
-            
-            for algo in self.algo_scores.keys():
-                if algo in self.algo_usage['25000']:
-                    self.algo_scores[algo]['25000'] = (self.ctcf_coeff * ctcf_scores[algo]['25000']) * (self.metrics_coeff * sum(metrics_scores[algo]['25000']))
-                if algo in self.algo_usage['100000']:
-                    self.algo_scores[algo]['100000'] = (self.ctcf_coeff * ctcf_scores[algo]['100000']) * (self.metrics_coeff * sum(metrics_scores[algo]['100000']))
-            with open(score_save_path, "w") as f:
-                json.dump(self.algo_scores, f)
-            logging.info('Algorithm scores computed and saved')
+        if os.path.isfile(metrics_scores_path):
+            metrics_scores = json.load(open(metrics_scores_path, "r"))
+        else:
+            metrics_scores = self.compute_metrics_scores(development_set)
+            with open(metrics_scores_path, "w") as f:
+                json.dump(metrics_scores, f)
+        
+        for algo in self.algo_scores.keys():
+            if algo in self.algo_usage['25000']:
+                self.algo_scores[algo]['25000'] = (self.ctcf_coeff * ctcf_scores[algo]['25000']) * (self.metrics_coeff * sum(metrics_scores[algo]['25000']))
+            if algo in self.algo_usage['100000']:
+                self.algo_scores[algo]['100000'] = (self.ctcf_coeff * ctcf_scores[algo]['100000']) * (self.metrics_coeff * sum(metrics_scores[algo]['100000']))
+        with open(score_save_path, "w") as f:
+            json.dump(self.algo_scores, f)
+        logging.info('Algorithm scores computed and saved')
+
+    def set_scores(self):
+        logging.info('Setting algorithm scores')
+        score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
+        ctcf_scores_path = os.path.join('saves', 'ctcf_scores.json')
+        metrics_scores_path = os.path.join('saves', 'metrics_scores.json')
+        
+        if not os.path.isfile(ctcf_scores_path) or not os.path.isfile(metrics_scores_path):
+            raise ValueError('BordersConsensus: Scores not computed - please run evaluate_algorithm_score()')
+        else:
+            ctcf_scores = json.load(open(ctcf_scores_path, "r"))
+            metrics_scores = json.load(open(metrics_scores_path, "r"))
+        
+        for algo in self.algo_scores.keys():
+            if algo in self.algo_usage['25000']:
+                self.algo_scores[algo]['25000'] = (self.ctcf_coeff * ctcf_scores[algo]['25000']) * (self.metrics_coeff * sum(metrics_scores[algo]['25000']))
+            if algo in self.algo_usage['100000']:
+                self.algo_scores[algo]['100000'] = (self.ctcf_coeff * ctcf_scores[algo]['100000']) * (self.metrics_coeff * sum(metrics_scores[algo]['100000']))
+        with open(score_save_path, "w") as f:
+            json.dump(self.algo_scores, f)
+
 
 
     # def compute_ctcf_algo_score(self, algo, set, resolution):

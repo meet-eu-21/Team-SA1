@@ -110,7 +110,7 @@ def plot_data(m, resolution, region=None, scale='log', tads=None):
     plt.show()
 
 class Hicmat:
-    def __init__(self, path, resolution):
+    def __init__(self, path, resolution, auto_filtering=True):
         m = np.load(path)
         if m.shape[0] != m.shape[1]:
             raise ValueError('Matrix is not square')
@@ -120,6 +120,9 @@ class Hicmat:
         self.reduced_matrix = None
         self.regions = None
         self.path = path
+
+        if auto_filtering:
+            self.filter(threshold=1)
 
     def filter(self, threshold = 0, min_length_region=5): # TODO: Discuss about min_length_region
         if self.filtered_coords is not None or self.reduced_matrix is not None:

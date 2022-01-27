@@ -8,69 +8,6 @@ from src.utils import chrom_name_to_variables
 from src.ctcf import bedPicks, checkCTCFcorrespondance
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit, TAD_class_to_str, str_to_TAD_class
 
-# Reference score for three methods (first scores)
-reference_scores = {
-        'tadtree':83.23,
-        'topdom':71.26,
-        'arrowhead':78.58
-    }
-reference_resolution = 25000
-
-# get the TADs boundaries of each method and give them a score
-def get_all_boundaries(TADs, gap):
-    score = {
-        'tadtree':83.23,
-        'topdom':71.26,
-        'arrowhead':78.58
-    }
-    dict_pos_score = {}
-    for key,tads in TADs.items():
-        for tad in tads:
-            for i in range(-gap, gap+1):
-                if tad[0]+i in dict_pos_score:
-                    dict_pos_score[tad[0]+i]+=score[key]*(1/(abs(i)+1))
-                else:
-                    dict_pos_score[tad[0]+i]=score[key]*(1/(abs(i)+1))
-    return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
-
-# construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
-def construct_tads(dict_pos_score, lim, threshold):
-    dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score>threshold}
-    pos = list(dict_pos_score.keys())
-    score = list(dict_pos_score.values())
-    output = {}
-    for i in range(len(pos)-1):
-        if pos[i+1]-pos[i]>lim:
-            continue
-        output[(pos[i], pos[i+1])]=score[i]+score[i+1]
-    return output
-
-# Get the consensus from a dictionary associating methods to their TADs founds on a chromosome
-def consensus(all_tads, resolution, threshold, gap=200000, lim=3000000):
-    lim = int(lim/resolution)
-    extended_lists = []
-    for method,list_i in all_tads.items():
-        all_tads[method] = sorted(set(list_i))
-    gap = int(gap/resolution)
-    dico = get_all_boundaries(all_tads, gap)
-    output = construct_tads(dico, lim, threshold)
-    return output
-
-# Compare consensus TADs with ground_truth (first function)
-def compare_TADs(obs, trues, gap):
-    counter=0
-    in_trues=False
-    for tad in obs:
-        for i in range(-gap, gap+1):
-            for j in range(-gap, gap+1):
-                if (tad[0]+i, tad[1]+j) in trues:
-                    in_trues=True
-                    counter+=1
-                    break
-            if in_trues:
-                in_trues=False
-                break
-    return counter/len(obs)
 
 class ConsensusMethod(ABC):
     def get_consensus(self, TADs):

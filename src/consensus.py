@@ -77,7 +77,7 @@ class ConsensusMethod(ABC):
         pass
 
 class BordersConsensus(ConsensusMethod):
-    def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False) -> None:
+    def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False, check_filtered=True) -> None:
         # path to file containing CTCF positions
         self.ctcf = {
                 'GM12878':'data/CTCF/GM12878/ENCFF796WRU.bed',
@@ -103,6 +103,8 @@ class BordersConsensus(ConsensusMethod):
         # weight of the CTCF metric and the both metrics which compare a method with the groundtruth
         self.ctcf_coeff = ctcf_coeff / ((ctcf_coeff + metrics_coeff) / 2)
         self.metrics_coeff = metrics_coeff / ((ctcf_coeff + metrics_coeff) / 2)
+
+        self.check_filtered = check_filtered
 
         if init:
             self.set_scores()
@@ -143,8 +145,20 @@ class BordersConsensus(ConsensusMethod):
                     break
                 next += 1
             if i+next < len(positions):
-                output_tads[(int(positions[i]*resolution), int(positions[i+next]*resolution))] = dict_pos_score[positions[i]] + dict_pos_score[positions[i+next]]
+                if self.check_nonfiltered_regions(tad=(positions[i], positions[i+next]), hic_mat=hic_mat):
+                    output_tads[(int(positions[i]*hic_mat.resolution), int(positions[i+next]*hic_mat.resolution))] = dict_pos_score[positions[i]] + dict_pos_score[positions[i+next]]
         return output_tads
+
+    # Check if reconstructed TAD include regions previously filtered due to lack of signal
+    def check_nonfiltered_regions(self, tad, hic_mat):
+        if self.check_filtered:
+            start, stop = tad
+            # if borders are in filtered regions, keep the TAD (trusting the CTCF peak), if non-borders are in filtered regions while borders are not discard the TAD
+            for i in range(start+1, stop):
+                if i in hic_mat.filtered_coords:
+                    if start not in hic_mat.filtered_coords and stop not in hic_mat.filtered_coords:
+                        return False
+        return True
 
     def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=50000, max_tad_size=3000000):
         #TODO: Implement min_tad_size

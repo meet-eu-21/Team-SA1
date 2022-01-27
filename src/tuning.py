@@ -311,7 +311,7 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
         plt.savefig('figures/tune_tadbit_score_threshold{}-{}.png'.format(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1]))
 
 
-def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 'coeffs': [(1,1), (2,3), (3,2), (1,2), (2,1), (1,3), (3,1)]}):
+def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 'coeffs': (1,2,0.25)}):
     set_25kb = []
     set_100kb = []
     for f in development_set:
@@ -365,7 +365,13 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 
         plt.savefig('figures/tune_bordersconsensus_threshold{}-{}.png'.format(param_ranges['threshold'][0], param_ranges['threshold'][1]))
 
     if 'coeffs' in param_ranges:
-        coeffs_list = param_ranges['coeffs']
+        start, stop, step = param_ranges['coeffs']
+        linspace = [float(format(e, '.2f')) for e in np.arange(start, float(format(stop+step-0.01, '.2f')), step)]
+        coeffs_list = []
+        for x in linspace:
+            for y in linspace:
+                if sum([round(x_in / y_in, 2) == round(x/y, 2) for x_in, y_in in coeffs_list]) == 0:
+                    coeffs_list.append((x,y))
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         df1 = pd.DataFrame({'resolution':[25000 for i in range(len(coeffs_list))], 'coeff_list_idx':[i for i in range(len(coeffs_list))], 'pred_rates':[0 for i in range(len(coeffs_list))], 'gt_rates':[0 for i in range(len(coeffs_list))]})
         df2 = pd.DataFrame({'resolution':[100000 for i in range(len(coeffs_list))], 'coeff_list_idx':[i for i in range(len(coeffs_list))], 'pred_rates':[0 for i in range(len(coeffs_list))], 'gt_rates':[0 for i in range(len(coeffs_list))]})
@@ -377,7 +383,7 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 
                 gt_rates_25kb, pred_rates_25kb = np.zeros(len(set_25kb)), np.zeros(len(set_25kb))
                 for j, f_25kb in enumerate(set_25kb):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
-                    consensus_method = BordersConsensus(init=True)
+                    consensus_method = BordersConsensus(init=True, ctcf_coeff=ctcf_coeff, metrics_coeff=metrics_coeff)
                     consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat)
                     _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
                     gt_rates_25kb[j] = gt_rate_consensus
@@ -388,7 +394,7 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 
                 gt_rates_100kb, pred_rates_100kb = np.zeros(len(set_100kb)), np.zeros(len(set_100kb))
                 for j, f_100kb in enumerate(set_100kb):
                     hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
-                    consensus_method = BordersConsensus(init=True)
+                    consensus_method = BordersConsensus(init=True, ctcf_coeff=ctcf_coeff, metrics_coeff=metrics_coeff)
                     consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat)
                     _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
                     gt_rates_100kb[j] = gt_rate_consensus
@@ -401,14 +407,14 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 
         ax1.bar(results_df.loc[results_df.resolution==25000]['coeff_list_idx']+0.2, results_df.loc[results_df.resolution==25000]['gt_rates'], width, label='Rate of Ground Truth TADs correctly predicted by OnTAD')
         ax1.set_xlabel('Coefficients used: (ctcf, metrics)')
         ax1.set_ylabel('Rate')
-        ax1.set_xticks(coeffs_list[results_df.loc[results_df.resolution==25000]['coeff_list_idx']])
+        ax1.set_xticks(ticks=results_df.loc[results_df.resolution==25000]['coeff_list_idx'], labels=[coeffs_list[i] for i in results_df.loc[results_df.resolution==25000]['coeff_list_idx']], rotation=90)
         ax1.set_title('BordersConsensus on 25kb intrachromosomal HiC data')
         ax1.legend()
         ax2.bar(results_df.loc[results_df.resolution==100000]['coeff_list_idx']-0.2, results_df.loc[results_df.resolution==100000]['pred_rates'], width, label='Rate of Predicted TADs by OnTAD present in Ground Truth')
         ax2.bar(results_df.loc[results_df.resolution==100000]['coeff_list_idx']+0.2, results_df.loc[results_df.resolution==100000]['gt_rates'], width, label='Rate of Ground Truth TADs correctly predicted by OnTAD')
         ax2.set_xlabel('Coefficients used: (ctcf, metrics)')
         ax2.set_ylabel('Rate')
-        ax2.set_xticks(coeffs_list[results_df.loc[results_df.resolution==100000]['coeff_list_idx']])
+        ax2.set_xticks(ticks=results_df.loc[results_df.resolution==100000]['coeff_list_idx'], labels=[coeffs_list[i] for i in results_df.loc[results_df.resolution==100000]['coeff_list_idx']], rotation=90)
         ax2.set_title('BordersConsensus on 100kb intrachromosomal HiC data')
         ax2.legend()
         plt.savefig('figures/tune_bordersconsensus_coeffs.png')

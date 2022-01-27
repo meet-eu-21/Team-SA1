@@ -311,7 +311,7 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
         plt.savefig('figures/tune_tadbit_score_threshold{}-{}.png'.format(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1]))
 
 
-def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 'coeffs': (1,2,0.25)}):
+def tune_borders_consensus(development_set, param_ranges={'threshold': (0,100,1), 'coeffs': (1,2,0.25)}):
     set_25kb = []
     set_100kb = []
     for f in development_set:
@@ -325,7 +325,8 @@ def tune_borders_consensus(development_set, param_ranges={'threshold': (0,150), 
     
     logging.info('Tuning BordersConsensus on 25kb intrachromosomal HiC data')
     if 'threshold' in param_ranges:
-        threshold_range = np.arange(param_ranges['threshold'][0], param_ranges['threshold'][1], step=0.5) # Step of 0.5
+        start, stop, step = param_ranges['threshold']
+        threshold_range = np.arange(start, stop, step)
         fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
         gt_rates_25kb, pred_rates_25kb = np.zeros((len(threshold_range), len(set_25kb))), np.zeros((len(threshold_range), len(set_25kb)))
         gt_rates_100kb, pred_rates_100kb = np.zeros((len(threshold_range), len(set_100kb))), np.zeros((len(threshold_range), len(set_100kb)))

@@ -106,9 +106,9 @@ class BordersConsensus(ConsensusMethod):
                 for i in range(-ctcf_width_region, ctcf_width_region+1):
                     idx_tad = int( (tad[0]+i) / resolution)
                     if idx_tad in dict_pos_score:
-                        dict_pos_score[idx_tad] += self.algo_scores[algo]['25000'] * (1/pow(2, abs(i))) # TODO: Find which law to use (Normal? Log?)
+                        dict_pos_score[idx_tad] += self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i))) # TODO: Find which law to use (Normal? Log?)
                     else:
-                        dict_pos_score[idx_tad] = self.algo_scores[algo]['25000'] * (1/pow(2, abs(i)))
+                        dict_pos_score[idx_tad] = self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i)))
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
     def construct_tads(self, dict_pos_score, resolution, lim, min_size, threshold): # TODO: Tune threshold

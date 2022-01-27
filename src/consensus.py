@@ -121,9 +121,9 @@ class BordersConsensus(ConsensusMethod):
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
     # construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
-    def construct_tads(self, dict_pos_score, resolution, lim, min_size, threshold): # TODO: Tune threshold
-        lim = round(lim/resolution)
-        minsz = round(min_size/resolution)
+    def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold): # TODO: Tune threshold
+        lim = round(lim/hic_mat.resolution)
+        minsz = round(min_size/hic_mat.resolution)
         assert lim>minsz
 
         dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score*100 >= threshold}
@@ -159,15 +159,15 @@ class BordersConsensus(ConsensusMethod):
             elif algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
                 tad_caller = str_to_TAD_class(algo)()
                 all_tads[algo] = tad_caller.getTADs(hic_mat)
-        return self.build_consensus(all_tads, hic_mat.resolution, threshold, ctcf_width_region, min_size, lim)
+        return self.build_consensus(hic_mat, all_tads, threshold, ctcf_width_region, min_size, lim)
 
     # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome 
-    def build_consensus(self, all_tads, resolution, threshold, ctcf_width_region, min_size, lim):
+    def build_consensus(self, hic_mat, all_tads, threshold, ctcf_width_region, min_size, lim):
         extended_lists = []
         for method,list_i in all_tads.items():
             all_tads[method] = sorted(set(list_i))
-        scores_dic = self.get_all_boundaries(all_tads, resolution, ctcf_width_region)
-        return self.construct_tads(scores_dic, resolution, lim, min_size, threshold)
+        scores_dic = self.get_all_boundaries(all_tads, hic_mat.resolution, ctcf_width_region)
+        return self.construct_tads(hic_mat, scores_dic, lim, min_size, threshold)
 
     def evaluate_algorithm_score(self, development_set):
         logging.info('Evaluating algorithm scores')

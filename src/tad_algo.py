@@ -8,6 +8,30 @@ from scipy.stats import ranksums
 
 from abc import ABC, abstractmethod
 
+def TAD_class_to_str(algo):
+    if algo == TopDom:
+        return 'TopDom'
+    elif algo == TADtree:
+        return 'TADtree'
+    elif algo == OnTAD:
+        return 'OnTAD'
+    elif algo == TADbit:
+        return 'TADbit'
+    else:
+        return 'unknown'
+
+def str_to_TAD_class(algo_str):
+    if algo_str == 'TopDom':
+        return TopDom
+    elif algo_str == 'TADtree':
+        return TADtree
+    elif algo_str == 'OnTAD':
+        return OnTAD
+    elif algo_str == 'TADbit':
+        return TADbit
+    else:
+        return None
+
 class TADsDetector(ABC):
     @abstractmethod
     def getTADs(self, hic_obj):

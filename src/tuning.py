@@ -9,6 +9,7 @@ from functools import partial
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit
 from src.metrics import compare_to_groundtruth
 from src.data import load_hic_groundtruth
+from src.consensus import BordersConsensus
 
 def tune_topdom(development_set, param_ranges={'window': (2,15)}):
     logging.info('Tuning TopDom on intrachromosomal HiC data')
@@ -189,7 +190,7 @@ def tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35), 'log2': (T
                     _, _, gt_rate_ontad, pred_rate_ontad = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=ontad_tads, gap=200000)
                     gt_rates_100kb[i,j] = gt_rate_ontad
                     pred_rates_100kb[i,j] = pred_rate_ontad
-        print('\OnTAD tuning - plotting')
+        print('\tOnTAD tuning - plotting')
         pred_rates_25kb = pred_rates_25kb.mean(axis=1)
         pred_rates_100kb = pred_rates_100kb.mean(axis=1)
         gt_rates_25kb = gt_rates_25kb.mean(axis=1)
@@ -236,7 +237,7 @@ def tune_ontad(development_set, param_ranges={'penalty': (0.05,0.35), 'log2': (T
                     pred_rates_100kb[j] = pred_rate_ontad
                 results_df.loc[((results_df.resolution==100000) & (results_df.log2==log2)), 'gt_rates'] = gt_rates_100kb.mean(axis=0)
                 results_df.loc[((results_df.resolution==100000) & (results_df.log2==log2)), 'pred_rates'] = pred_rates_100kb.mean(axis=0)
-        print('\OnTAD tuning - plotting')
+        print('\tOnTAD tuning - plotting')
         width=0.4
         ax1.bar(results_df.loc[results_df.resolution==25000]['log2']-0.2, results_df.loc[results_df.resolution==25000]['pred_rates'], width, label='Rate of Predicted TADs by OnTAD present in Ground Truth')
         ax1.bar(results_df.loc[results_df.resolution==25000]['log2']+0.2, results_df.loc[results_df.resolution==25000]['gt_rates'], width, label='Rate of Ground Truth TADs correctly predicted by OnTAD')
@@ -290,7 +291,7 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
                     _, _, gt_rate_tadbit, pred_rate_tadbit = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=tadbit_tads, gap=200000)
                     gt_rates_100kb[i,j] = gt_rate_tadbit
                     pred_rates_100kb[i,j] = pred_rate_tadbit
-        print('\TADbit tuning - plotting')
+        print('\tTADbit tuning - plotting')
         pred_rates_25kb = pred_rates_25kb.mean(axis=1)
         pred_rates_100kb = pred_rates_100kb.mean(axis=1)
         gt_rates_25kb = gt_rates_25kb.mean(axis=1)
@@ -309,6 +310,59 @@ def tune_tadbit(development_set, param_ranges={'score_threshold': (0.0,10.0)}):
         ax2.legend()
         plt.savefig('figures/tune_tadbit_score_threshold{}-{}.png'.format(param_ranges['score_threshold'][0], param_ranges['score_threshold'][1]))
 
+
+def tune_borders_consensus_threshold(development_set, param_ranges={'threshold': (0,150)}):
+    set_25kb = []
+    set_100kb = []
+    for f in development_set:
+        if '25kb' in f:
+            set_25kb.append(f)
+        elif '100kb' in f:
+            set_100kb.append(f)
+        else:
+            raise ValueError('File name {} was unexpected'.format(f))
+
+    
+    logging.info('Tuning BordersConsensus on 25kb intrachromosomal HiC data')
+    if 'threshold' in param_ranges:
+        threshold_range = np.arange(param_ranges['threshold'][0], param_ranges['threshold'][1], step=0.5) # Step of 0.5
+        fig, (ax1, ax2) = plt.subplots(1,2, figsize=(20,10))
+        gt_rates_25kb, pred_rates_25kb = np.zeros((len(threshold_range), len(set_25kb))), np.zeros((len(threshold_range), len(set_25kb)))
+        gt_rates_100kb, pred_rates_100kb = np.zeros((len(threshold_range), len(set_100kb))), np.zeros((len(threshold_range), len(set_100kb)))
+        for i, threshold in enumerate(tqdm(threshold_range)):
+            with contextlib.redirect_stdout(io.StringIO()) as f:
+                for j, f_25kb in enumerate(set_25kb):
+                    hic_mat, arrowhead_tads = load_hic_groundtruth(f_25kb, 25000)
+                    consensus_method = BordersConsensus()
+                    consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat, threshold=threshold)
+                    _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
+                    gt_rates_25kb[i,j] = gt_rate_consensus
+                    pred_rates_25kb[i,j] = pred_rate_consensus
+                for j, f_100kb in enumerate(set_100kb):
+                    hic_mat, arrowhead_tads = load_hic_groundtruth(f_100kb, 100000)
+                    consensus_method = BordersConsensus()
+                    consensus_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat, threshold=threshold)
+                    _, _, gt_rate_consensus, pred_rate_consensus = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=consensus_tads, gap=200000)
+                    gt_rates_100kb[i,j] = gt_rate_consensus
+                    pred_rates_100kb[i,j] = pred_rate_consensus
+        print('\tBordersConsensus tuning - plotting')
+        pred_rates_25kb = pred_rates_25kb.mean(axis=1)
+        pred_rates_100kb = pred_rates_100kb.mean(axis=1)
+        gt_rates_25kb = gt_rates_25kb.mean(axis=1)
+        gt_rates_100kb = gt_rates_100kb.mean(axis=1)
+        ax1.plot(threshold_range, gt_rates_25kb, label='Rate of Ground Truth TADs correctly predicted by BordersConsensus')
+        ax1.plot(threshold_range, pred_rates_25kb, label='Rate of Predicted TADs by BordersConsensus present in Ground Truth')
+        ax1.set_xlabel('Threshold')
+        ax1.set_ylabel('Rate')
+        ax1.set_title('BordersConsensus on 25kb intrachromosomal HiC data')
+        ax1.legend()
+        ax2.plot(threshold_range, gt_rates_100kb, label='Rate of Ground Truth TADs correctly predicted by BordersConsensus')
+        ax2.plot(threshold_range, pred_rates_100kb, label='Rate of Predicted TADs by BordersConsensus present in Ground Truth')
+        ax2.set_xlabel('Threshold')
+        ax2.set_ylabel('Rate')
+        ax2.set_title('BordersConsensus on 100kb intrachromosomal HiC data')
+        ax2.legend()
+        plt.savefig('figures/tune_bordersconsensus_threshold{}-{}.png'.format(param_ranges['threshold'][0], param_ranges['threshold'][1]))
 
 
 def precompute_all_data(set):

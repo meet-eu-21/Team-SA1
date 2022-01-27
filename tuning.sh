@@ -1,24 +1,26 @@
 #!/bin/bash
 
 python - <<END
-import platform
+import platform, logging
 print('Init tuning from platform {}'.format(platform.system()))
 from src.data import HiCDataset
 import src.utils
 import src.metrics
 import src.tad_algo
-from src.tuning import tune_topdom, tune_tadtree, tune_ontad, tune_tadbit, precompute_all_data
+from src.tuning import tune_topdom, tune_tadtree, tune_ontad, tune_tadbit, tune_borders_consensus_threshold, precompute_all_data
+logging.basicConfig(filename='dev.log', filemode='a+', level=logging.INFO)
+logging.info('Start tuning')
 
 print('Init dataset')
 dataset = HiCDataset(data_folder='data')
 dataset.build_data_dict()
 development_set, test_set = dataset.split(dev_ratio = 0.7, test_ratio=0.3)
-precompute_all_data(development_set)
-precompute_all_data(test_set)
+# precompute_all_data(development_set)
+# precompute_all_data(test_set)
 
 # print('\nTuning TopDom...')
 # print('\tParameter window')
-# tune_topdom(development_set)
+# tune_topdom(development_set, param_ranges={'window': (1,15)})
 
 # print('\nTuning TADTree...')
 # print('\tParameter N')
@@ -36,5 +38,9 @@ precompute_all_data(test_set)
 # print('\tParameter score_threshold')
 # tune_tadbit(development_set)
 
-# print('\nTuning finished!')
+print('\nTuning BordersConsensus...')
+print('\tParameter threshold')
+tune_borders_consensus_threshold(development_set, param_ranges={'threshold': (0,450)})
+
+print('\nTuning finished!')
 END

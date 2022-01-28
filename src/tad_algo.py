@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
-import os, time, logging
+import os, time, logging, platform
 import json
 from scipy import stats
 from scipy.stats import ranksums
-# import pytadbit.tadbit as pytadbit # Only on Linux
+
+if platform.system() == 'Linux':
+    import pytadbit.tadbit as pytadbit # Only on Linux
 
 from abc import ABC, abstractmethod
 
@@ -248,6 +250,8 @@ class OnTAD(TADsDetector):
 
     def runSingleTAD(self, in_file, out_file, maxsz, minsz, penalty, ldiff, lsize, log2):
         # TODO: Check parameters
+        if not platform.system() == 'Linux':
+            raise Exception('OnTAD is functional under Linux only!')
         if log2:
             os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -log2 -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
         else:
@@ -272,6 +276,8 @@ class TADbit(TADsDetector):
         return tads
 
     def runSingleTAD(self, hic_obj, max_size):
+        if not platform.system() == 'Linux':
+            raise Exception('TADbit is functional under Linux only!')
         max_size = int(max_size/hic_obj.resolution)
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")

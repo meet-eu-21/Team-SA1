@@ -33,6 +33,15 @@ def load_hic(path, resolution):
 		set_score(matrix, line)
 	return matrix
 
+
+def preprocess_file(file_path, resolution):
+	m = load_hic(file_path, resolution=resolution)
+	# put the matrix in a numpy file
+	np.save(file_path.replace(".RAWobserved",".npy"), m)
+	# put the matrix in a .txt (for TADtree)
+	np.savetxt(file_path.replace(".RAWobserved",".txt"), m, delimiter=' ', fmt='%d')
+	logging.info('Preprocessing: file {} preprocessed'.format(file_path.split(os.path.sep)[-1:]))
+
 # preprocess all the Hic files contained in a folder (with the same resolution)
 def preprocess_data(folder, resolution):
 	start_time = time.time()
@@ -41,12 +50,7 @@ def preprocess_data(folder, resolution):
 	logging.info('\tPreprocessing of folder {} started...'.format(folder))
 	for f in os.listdir(folder):
 		if f.endswith('.RAWobserved'):
-			m = load_hic(os.path.join(folder, f), resolution=resolution)
-			# put the matrix in a numpy file
-			np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
-			# put the matrix in a .txt (for TADtree)
-			np.savetxt(os.path.join(folder, f.replace(".RAWobserved",".txt")), m, delimiter=' ', fmt='%d')
-			logging.info('Preprocessing: file {} preprocessed'.format(f))
+			preprocess_file(os.path.join(folder, f), resolution)
 		else:
 			logging.info('Preprocessing: file {} skipped'.format(f))
 	logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))

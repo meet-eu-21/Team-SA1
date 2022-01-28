@@ -51,8 +51,22 @@ class BordersConsensus(ConsensusMethod):
         if init:
             self.set_scores()
     
-    # get the TADs boundaries of each method and give them a score based on the score of each method
+    
     def get_all_boundaries(self, all_algo_TADs, resolution, ctcf_width_region=4):
+        """
+        get the TADs boundaries of each method and give them a score based on the score of each method
+        ----------
+        INPUT
+        all_algo_TADs : dict
+            dicitonary associating algorithm with the TADs found by it on the chromosome
+        resolution : int
+            resolution of the HiC data
+        ctcf_width_region : int
+            maximum distance between a TAD boundary and a CTCF peaks to consider them like the same
+        -----------
+        OUTPUT
+        dictionary of all positions associating to their score
+        """
         dict_pos_score = {}
         for algo, tads in all_algo_TADs.items():
             for tad in tads:
@@ -64,8 +78,26 @@ class BordersConsensus(ConsensusMethod):
                         dict_pos_score[idx_tad] = self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i)))
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0])) # sorted the TADs in the chronological order
 
-    # construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
+
     def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold):
+        """
+        construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
+        ----------
+        INPUT
+        hic_mat : Hicmat object 
+            dicitonary associating algorithm with the TADs found by it on the chromosome
+        dict_pos_score : dict
+            dictionary of all positions associating to their score
+        lim : int
+            maximum size of a TAD
+        min_size : int
+            minimum size of a TAD
+        threshold : int
+            thresold that determines if the position has a high enough score to be kept
+        -----------
+        OUTPUT
+        dictionary of all positions associating to their score
+        """
         lim = round(lim/hic_mat.resolution)
         minsz = round(min_size/hic_mat.resolution)
         assert lim>minsz

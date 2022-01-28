@@ -32,27 +32,3 @@ def bedPicks(file, chrom):
     #we take into account data for a specific chromosome 
     df = df[df['chrom']==chrom]
     return df.sort_values(by = 'chStart') # sorted the peaks by chronological order
-    
-    # l_sigValue = []
-    # for ctcf in df.index.tolist():
-    #     locus = int(df['chStart'][ctcf])
-    #     if locus not in l_peak:
-    #         l_peak.append(locus)
-    #         l_sigValue.append(df['sigValue'][ctcf])
-    # return l_peak, l_sigValue
-
-# to remove
-def evaluate(TADs, ctcf):
-    a=0
-    b=[]
-    c=set()
-    for tad in TADs:
-        if tad[0] in ctcf and tad[0] not in b:
-            a+=1
-            b.append(tad[0])
-        if tad[1] in ctcf and tad[1] not in b:
-            a+=1
-            b.append(tad[1])
-        c.add(tad[0])
-        c.add(tad[1])
-    return round(a/max(1,len(c)), 4)*100

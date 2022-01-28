@@ -1,6 +1,6 @@
 import pandas as pd
 
-
+# Get the rate of TADs boundaries which correspond to CTCF peaks
 def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
     tads_borders_ctcf = set()
     all_borders = set()
@@ -14,7 +14,7 @@ def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
                 tads_borders_ctcf.add(tad[1])
     return round(len(tads_borders_ctcf)/max(1,len(all_borders)), 4)
 
-
+# Get all CTCF peaks of a chromosome from a file containing all CTCF peaks of the whole genome for a cell type
 def bedPicks(file, chrom):
     df = pd.read_csv(file, sep='\t', comment = 't', header=None)
     header = ['chrom', 'chStart', 'chEnd', 'name', 'score', 'strand', 'sigValue', 'pValue', 'qValue', 'peak']
@@ -31,7 +31,7 @@ def bedPicks(file, chrom):
         
     #we take into account data for a specific chromosome 
     df = df[df['chrom']==chrom]
-    return df.sort_values(by = 'chStart')
+    return df.sort_values(by = 'chStart') # sorted the peaks by chronological order
     
     # l_sigValue = []
     # for ctcf in df.index.tolist():
@@ -41,6 +41,7 @@ def bedPicks(file, chrom):
     #         l_sigValue.append(df['sigValue'][ctcf])
     # return l_peak, l_sigValue
 
+# to remove
 def evaluate(TADs, ctcf):
     a=0
     b=[]

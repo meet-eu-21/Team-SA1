@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import os, time, logging, subprocess, platform
@@ -62,6 +61,7 @@ def plot_data(m, resolution, region=None, scale='log', tads=None):
 		Vmax = m.max()
 		Vmin = m.min()
 		# TODO: find something for contrast diagonal / other
+	# adjusted values of the matrix if a zoom is indicated and define the square that frames the zone
 	if type(region) is tuple:
 		# Subset of the file - zoom on a region
 		if resolution is None:
@@ -93,11 +93,13 @@ def plot_data(m, resolution, region=None, scale='log', tads=None):
 	plt.yticks(ticks=yticks_cor, labels=['{}'.format(int(((b+start_idx)*resolution)/1000000)) for b in yticks_cor])
 	bar = plt.colorbar(shw)
 	bar.set_label('Scale')
+	# display the TADs if they are indicated
 	if tads is not None:
 		for tad in tads:
 			tad_length = (tad[1]-tad[0]) / resolution
 			xy = (int(tad[0]/resolution), int(tad[0]/resolution))
 			ax.add_patch(Rectangle(xy, tad_length, tad_length, fill=False, edgecolor='blue', linewidth=1))
+	# zoom on a region if it is indicated
 	if region is not None:
 		dezoom_left = min(start, dezoom)
 		dezoom_right = min(original_len-end, dezoom)
@@ -109,25 +111,30 @@ def plot_data(m, resolution, region=None, scale='log', tads=None):
 								linewidth=2))
 	plt.show()
 
+# Class for a Hic data
 class Hicmat:
+	# constructor
 	def __init__(self, path, resolution, auto_filtering=True, cell_type=None):
+		# path to the file that contains the contact matrix to numpy format
 		if path.endswith('.npy'):
 			self.path = path
 		else:
 			self.path = path + '.npy'
-		
+		# numpy contact matrix
 		m = np.load(self.path)
-		if m.shape[0] != m.shape[1]:
+		if m.shape[0] != m.shape[1]: # check if the matrix is square
 			raise ValueError('Matrix is not square')
+		# resolution of the matrix
 		self.resolution = resolution
+		# froze the original matrix in another variable
 		self.original_matrix = np.array(m)
 		self.filtered_coords = None
 		self.reduced_matrix = None
 		self.regions = None
-
+		# matrix without missing data
 		if auto_filtering:
 			self.filter(threshold=1)
-
+		# 
 		self.set_cell_type(cell_type)
 
 	def set_cell_type(self, cell_type):

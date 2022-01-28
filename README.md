@@ -38,32 +38,11 @@ The respective folders for this GitHub are:
 - src: contains the different python scripts that are used for our project.<img src="https://img.icons8.com/color/25/000000/property-script.png"/>
 
 
-## Code and libraries, dependencies examples (tbd)
-For preprocessing and TAD recognition:
-```python
-import numpy as np
-import liam_method as lm
-from matplotlib.colors import Normalize
-from matplotlib.patches import Rectangle
-from src.utils import SCN
-import pandas as pd
-import os, time, logging
-from sklearn.preprocessing import scale
-from scipy import stats
-from scipy.stats import ranksums
-from abc import ABC, abstractmethod
+## Command line to run Banana-TAD on a single 100kb file
+```bash
+python BananaTAD.py --folder data\example --file chr1_100kb.RAWobserved --cell_type GM12878 --resolution 100000 --chrom 1
 ```
-For TADs length analysis:
-```python
-import numpy as np
-import glob
-import urllib3
-from lmfit.models import GaussianModel
-from math import *
-import matplotlib.pyplot as plt
-import os
-```
-`topdom` `arrowhead` `tadtree` `tadtool` `hictool`
+`arrowhead` `topdom` `tadtree` `ontad` `tadbit`
 
 ## Credit
 Icons embedded from [icons8](https://icons8.com/), all rights belonging to their respective owners.

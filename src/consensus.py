@@ -177,7 +177,7 @@ class BordersConsensus(ConsensusMethod):
         with open(score_save_path, "w") as f:
             json.dump(self.algo_scores, f)
     
-    # 
+    # Calculate the average CTCF correspondence for each algorithm on the training dataset
     def compute_ctcf_scores(self, development_set):
         logging.info('Computing CTCF scores on intrachromosomal HiC data')
         set_25kb = []
@@ -188,7 +188,7 @@ class BordersConsensus(ConsensusMethod):
             elif '100kb' in f:
                 set_100kb.append(f)
             else:
-                raise ValueError('File name {} was unexpected'.format(f))
+                raise ValueError('File name {} was unexpected'.format(f)) # the resolution can only be 25kb or 100kb
 
         algo_ctcf_scores = {algo: {'25000': np.NaN, '100000': np.NaN} for algo in self.algo_scores.keys()}
         with contextlib.redirect_stdout(io.StringIO()) as f:
@@ -217,6 +217,7 @@ class BordersConsensus(ConsensusMethod):
         
         return algo_ctcf_scores
 
+    # Calculate the average groundtruth correspondence for each algorithm on the training dataset
     def compute_metrics_scores(self, development_set):
         logging.info('Computing Metrics on intrachromosomal HiC data')
         set_25kb = []
@@ -227,7 +228,7 @@ class BordersConsensus(ConsensusMethod):
             elif '100kb' in f:
                 set_100kb.append(f)
             else:
-                raise ValueError('File name {} was unexpected'.format(f))
+                raise ValueError('File name {} was unexpected'.format(f)) # the resolution can only be 25kb or 100kb
         
         algo_performances = {algo: {'25000': (np.NaN, np.NaN), '100000': (np.NaN, np.NaN)} for algo in self.algo_scores.keys()}
         for algo in self.algo_scores.keys():

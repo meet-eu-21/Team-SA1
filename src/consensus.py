@@ -62,14 +62,14 @@ class BordersConsensus(ConsensusMethod):
                         dict_pos_score[idx_tad] += self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i))) # TODO: Find which law to use (Normal? Log?)
                     else:
                         dict_pos_score[idx_tad] = self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i)))
-        return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
+        return dict(sorted(dict_pos_score.items(), key=lambda x:x[0])) # sorted the TADs in the chronological order
 
     # construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
     def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold):
         lim = round(lim/hic_mat.resolution)
         minsz = round(min_size/hic_mat.resolution)
         assert lim>minsz
-
+        # filter to keep the positions if their score is above threshold, keep score too
         dict_pos_score = {pos:score for pos,score in dict_pos_score.items() if score*100 >= threshold}
 
         positions = list(dict_pos_score.keys())
@@ -78,7 +78,6 @@ class BordersConsensus(ConsensusMethod):
             # control if tad is too large
             if positions[i+1]-positions[i] > lim:
                 continue
-
             # control if tad is too small
             next = 1
             for j in range(i+1, len(positions)):
@@ -102,22 +101,25 @@ class BordersConsensus(ConsensusMethod):
                         return False
         return True
 
+    # Get only the positions of the TADs without the scores
     def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
-    # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome    
+    # Get the consensus from an object from the Hicmat class
     def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=125000, lim=3000000):
         # TODO: Add default behaviour if resolution is neither 25000 nor 100000
         all_tads = {}
         for algo in self.algo_scores.keys():
             if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
-                if math.isnan(self.algo_scores[algo]):
+                # check if each algorithm can be used with the resolution
+                if math.isnan(self.algo_scores[algo]): 
                     raise ValueError('ScoreConsensus not trained')
-                tad_caller = str_to_TAD_class(algo)()
+                # get the TADs associated to this HiC data with each algorithm
+                tad_caller = str_to_TAD_class(algo)()  
                 all_tads[algo] = tad_caller.getTADs(hic_mat)
         return self.build_consensus(hic_mat, all_tads, threshold, ctcf_width_region, min_size, lim)
 
-    # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome 
+    # Build the TADs from a dictionary associating methods to their TADs founds on a chromosome and an object from de Hicmat class, a score is associated to each TAD
     def build_consensus(self, hic_mat, all_tads, threshold, ctcf_width_region, min_size, lim):
         extended_lists = []
         for method,list_i in all_tads.items():
@@ -125,6 +127,7 @@ class BordersConsensus(ConsensusMethod):
         scores_dic = self.get_all_boundaries(all_tads, hic_mat.resolution, ctcf_width_region)
         return self.construct_tads(hic_mat, scores_dic, lim, min_size, threshold)
 
+    # Calculate the weight of each algorithm on the training dataset, based on the CTCF correspondence and the metrics scores
     def evaluate_algorithm_score(self, development_set):
         logging.info('Evaluating algorithm scores')
         score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
@@ -154,13 +157,14 @@ class BordersConsensus(ConsensusMethod):
             json.dump(self.algo_scores, f)
         logging.info('Algorithm scores computed and saved')
 
+    # recalculate weight of each method with potentials different coefficients, without recalculate on all the training dataset
     def set_scores(self):
         logging.info('Setting algorithm scores')
         score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
         ctcf_scores_path = os.path.join('saves', 'ctcf_scores.json')
         metrics_scores_path = os.path.join('saves', 'metrics_scores.json')
         
-        if not os.path.isfile(ctcf_scores_path) or not os.path.isfile(metrics_scores_path):
+        if not os.path.isfile(ctcf_scores_path) or not os.path.isfile(metrics_scores_path): # check if each score is already calculated
             raise ValueError('BordersConsensus: Scores not computed - please run evaluate_algorithm_score()')
         else:
             ctcf_scores = json.load(open(ctcf_scores_path, "r"))
@@ -173,7 +177,8 @@ class BordersConsensus(ConsensusMethod):
                 self.algo_scores[algo]['100000'] = (self.ctcf_coeff * ctcf_scores[algo]['100000']) * (self.metrics_coeff * sum(metrics_scores[algo]['100000']))
         with open(score_save_path, "w") as f:
             json.dump(self.algo_scores, f)
-            
+    
+    # 
     def compute_ctcf_scores(self, development_set):
         logging.info('Computing CTCF scores on intrachromosomal HiC data')
         set_25kb = []

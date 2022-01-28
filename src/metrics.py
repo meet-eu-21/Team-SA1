@@ -1,6 +1,24 @@
 def compare_to_groundtruth(ground_truth, predicted_tads, gap=200000):
     """
     Compare predicted TADs to ground truth TADs
+    ----------
+    INPUT
+    ground_truth : list of tuples
+        the ground truth TADs
+    predicted : list of tuples 
+        the predicted TADs
+    gap : int
+        value that represents the maximum difference between two TADs to consider them like the same
+    -----------
+    OUTPUT
+    gt_predicted : list of booleans
+        True if the TAD at this position in the prediction is in the ground truth TADs, False if not
+    prediction_correct : list of booleans
+        True if the TAD at this position in the ground truth TADs is in the prediction, False if not
+    gt_predicted_rate : float
+        rate of predicted TADs presents in the ground truth TADs
+    prediction_correct_rate : float
+        rate of ground truth TADs presents in the predicted TADs
     """
     gt_predicted = [False for i in range(len(ground_truth))]
     prediction_correct = [False for i in range(len(predicted_tads))]
@@ -30,6 +48,20 @@ def compare_to_groundtruth(ground_truth, predicted_tads, gap=200000):
 
 
 def compare_sample_to_groundtruth(pred_tad, gt_tad, gap=200000):
+    """
+    Compare a predicted TAD to a ground truth TAD
+    ----------
+    INPUT
+    pred_tad : tuple
+        a predicted TAD
+    gt_tad : tuple
+        a ground truth TAD
+    gap : int
+        value that represents the maximum difference between two TADs to consider them like the same
+    -----------
+    OUTPUT
+    True if the both TADs are considered like the same, False if not
+    """
     pred_tad_start, pred_tad_end = pred_tad[0], pred_tad[1]
     gt_tad_start, gt_tad_end = gt_tad[0], gt_tad[1]
 

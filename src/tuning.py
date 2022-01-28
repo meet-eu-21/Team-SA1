@@ -11,6 +11,16 @@ from src.metrics import compare_to_groundtruth
 from src.data import load_hic_groundtruth
 from src.consensus import BordersConsensus
 
+
+"""
+Diverse tuning methods to find the best hyperparameters for algorithms TopDom, TADtree, OnTAD and TADbit.
+For each method, we compute and print curves of Ground Truth rate (M_gt) and Predicted TADs rate (M_pred) for each parameters - metrics as defined in the report.
+Plots are exported under the folder figures.
+
+N.B: Computational time can be consequent, therefore cautious usage of the tuning functions is recommended. 
+"""
+
+
 def tune_topdom(development_set, param_ranges={'window': (2,15)}):
     logging.info('Tuning TopDom on intrachromosomal HiC data')
     set_25kb = []

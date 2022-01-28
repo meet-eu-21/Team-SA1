@@ -129,17 +129,20 @@ class Hicmat:
 		# froze the original matrix in another variable
 		self.original_matrix = np.array(m)
 		self.filtered_coords = None
-		self.reduced_matrix = None
+		self.reduced_matrix = None # matrix without regions with unsufficient signal
 		self.regions = None
-		# matrix without missing data
+		
+		# Filter the matrix if auto_filtering is True
 		if auto_filtering:
 			self.filter(threshold=1)
-		# 
+		
+		# Set cell type
 		self.set_cell_type(cell_type)
 
 	def set_cell_type(self, cell_type):
 		path_comps = self.path.split(os.sep)
 
+		# If present in the path, automatically extract the cell type
 		if 'GM12878' in path_comps:
 			self.cell_type = 'GM12878'
 		elif 'HMEC' in path_comps:
@@ -151,6 +154,7 @@ class Hicmat:
 		elif 'NHEK' in path_comps:
 			self.cell_type = 'NHEK'
 		else:
+			# Else, use the cell_type argument
 			if cell_type is not None:
 				self.cell_type = cell_type
 			else:

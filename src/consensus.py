@@ -111,8 +111,7 @@ class BordersConsensus(ConsensusMethod):
         all_tads = {}
         for algo in self.algo_scores.keys():
             if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
-                # check if each algorithm can be used with the resolution
-                if math.isnan(self.algo_scores[algo]): 
+                if math.isnan(self.algo_scores[algo]['{}'.format(hic_mat.resolution)]):
                     raise ValueError('ScoreConsensus not trained')
                 # get the TADs associated to this HiC data with each algorithm
                 tad_caller = str_to_TAD_class(algo)()  

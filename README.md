@@ -1,4 +1,4 @@
-<h1 align="center"> Team-SA1 for TAD prediction <img src="https://img.icons8.com/color/48/000000/predcit.png"/> (algorithms, tools and methods) </h1>
+<h1 align="center"> Team-SA1 for TAD prediction: BananaTAD <img src="https://img.icons8.com/color/48/000000/banana.png" width="20"/> </h1>
 
 <h2 align="center"><img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> Meet-EU Team SA1: <img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> </h2>
 <h4 align="center"><img src="https://img.icons8.com/color/48/000000/banana.png" width="20"/> A. Marina, C. Simon, L. Liam, T. Alexis, Z. Yann <img src="https://img.icons8.com/color/48/000000/banana.png" width="20"/></h4> 
@@ -25,21 +25,6 @@ The primary goal of this project is thus the improvement and analysis of TAD cal
 - <img src="https://img.icons8.com/emoji/30/000000/hundred-points.png"/> Using a **scoring system** that aims to make the whole process more precise.
 - <img src="https://img.icons8.com/external-vitaliy-gorbachev-lineal-color-vitaly-gorbachev/30/000000/external-ruler-graphic-design-vitaliy-gorbachev-lineal-color-vitaly-gorbachev.png"/> Developing a TAD **length analysis** method to help with the scoring system and maybe try to predict the distribution of TAD lengths later on (This part is very experimental and we hope more qualified researchers can use it as first step for a new method).
 - <img src="https://img.icons8.com/color/30/000000/vertical-settings-mixer--v1.png"/> **Tunning** every functions to secure the best performances.
-
-## Ongoing work
-- Topdom [Publication](https://pubmed.ncbi.nlm.nih.gov/26704975/) and [code](https://github.com/HenrikBengtsson/TopDom), originally coded in R and recoded in Python by the team. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/arrow--v2.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- TADTree [Publication](https://academic.oup.com/bioinformatics/article/32/11/1601/1742546?login=true) and [code](https://github.com/raphael-group/TADtree), coded in Python and adapted for our use. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/> 
-- Consensus between the above pipelines; based on multiple criterion such as CTCF sites, TAD overlap between pipelines, TAD size categorization, etc. The consensus is the most important part of the project and we would ideally incorporate more than just the two above pipelines. <img src="https://img.icons8.com/emoji/48/000000/folded-hands-emoji.png" width="20"/> <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- TAD size classification; by studying the size distributions of TADs identified by each pipeline, we hope to be able to classify TADs into main TADs, sub-TADs, etc., and give confidence scores of some sort. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- ... and more
-
-## Upcoming work
-- [TADTool](https://github.com/vaquerizaslab/tadtool): a seemingly comprehensive set of tools that could be useful for improving TAD quantification by identifying meaningful parameters. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- [HiCtool](https://github.com/Zhong-Lab-UCSD/HiCtool): another promising pipeline to identify TADs from raw Hi-C data. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- [TADBit](https://github.com/3DGenomes/TADbit): a python library that was also included in Rao et al.'s assessement of TAD calling tools. <img src="https://img.icons8.com/color/48/000000/python--v1.png" width="20"/>
-- CTCF sites integration to consensus analysis. <img src="https://img.icons8.com/external-icongeek26-linear-colour-icongeek26/64/000000/external-biology-science-and-technology-icongeek26-linear-colour-icongeek26.png" width="20"/>
-- [TADCompare](https://bioconductor.org/packages/devel/bioc/vignettes/TADCompare/inst/doc/TADCompare.html) and [input format](https://bioconductor.org/packages/devel/bioc/vignettes/TADCompare/inst/doc/Input_Data.html): a very recent and promising package in R that allows identification of differential TAD boundaries b/ two datasets and has potential for consensus calling. <img src="https://img.icons8.com/external-becris-flat-becris/64/000000/external-r-data-science-becris-flat-becris.png" width="20"/>
-- ... and more
 
 ## Sections and folders
 **This part needs to be updated**

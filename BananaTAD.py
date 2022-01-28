@@ -1,9 +1,6 @@
-#import numpy as np
-#import pandas as pd
-import sys, argparse, os#, time, logging
-from src.data import Hicmat, preprocess_data #, HiCDataset, plot_data, load_hic_groundtruth
-#from src.tad_algo import TopDom, TADtree, OnTAD, TADbit
-#from src.metrics import compare_to_groundtruth
+import sys, argparse, os, json
+from src.metrics import compare_to_groundtruth
+from src.data import Hicmat, load_hic_groundtruth, preprocess_file
 from src.consensus import BordersConsensus
 from src.utils import *
  
@@ -35,19 +32,47 @@ def parse_arguments():
         type=int,
         help="Resolution of the HiC data",
     )
+
+    parser.add_argument(
+        "--metrics_mode",
+        default=False,
+        action='store_true',
+        help="If set, the program will produce the files with metrics inside",
+    )
+
+    parser.add_argument(
+        "--gt_folder",
+        default = None,
+        help="Folder containing the ground truth files",
+    )
     return parser.parse_args()
 
 args = parse_arguments()
-data_path = os.path.join(args.folder, args.file)
+raw_path = os.path.join(args.folder, args.file)
+data_path = os.path.splitext(raw_path)[0] + '.npy'
 
 if args.resolution not in [25000, 100000]:
     sys.exit("BananaTAD support only resolution of 25kb or 100kb.")
 
+assert not args.metrics_mode or args.gt_folder is not None, "If metrics_mode is set, gt_folder must be set" 
+
 # If files weren't preprocessed, do it now
 if not os.path.isfile(data_path):
-    preprocess_data(args.folder, args.resolution)
+    print(raw_path)
+    preprocess_file(raw_path, args.resolution)
 
 hic_mat = Hicmat(data_path, args.resolution, auto_filtering=True, cell_type=args.cell_type)
 consensus_method = BordersConsensus(init=True)
-final_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat, threshold=10) # TADs '(from, to)'
-final_tads_scores = consensus_method.get_consensus(hic_mat=hic_mat, threshold=10) # TADs scores '(from, to):score'
+
+if args.metrics_mode:
+    hic_mat, arrowhead_tads = load_hic_groundtruth(data_path, 25000, arrowhead_folder=args.gt_folder)
+    final_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat) # TADs '(from, to)'
+    savefile = open(os.path.join(hic_mat.get_folder(), hic_mat.get_name().replace('.npy', 'bananatads.txt')), 'w+')
+    _, _, gt_rate_final, pred_rate_final = compare_to_groundtruth(ground_truth=arrowhead_tads, predicted_tads=final_tads)
+    savefile.write('TADs: {}\n'.format(final_tads))
+    savefile.write('METRICS: (Ground Truth Rate: {}, Predicted Rate: {})\n'.format(gt_rate_final, pred_rate_final))
+    savefile.close()
+else:
+    final_tads_scores = consensus_method.get_consensus(hic_mat=hic_mat) # TADs scores '(from, to):score'
+    with open(os.path.join(hic_mat.get_folder(), hic_mat.get_name().replace('.npy', '.json')), "w") as f:
+        json.dump(final_tads_scores, f)

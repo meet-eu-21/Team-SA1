@@ -226,5 +226,6 @@ __pycache__/*.*
 
 # datasets
 data/
+backups/
 
 test.*

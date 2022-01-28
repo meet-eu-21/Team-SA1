@@ -1,11 +1,36 @@
 import numpy as np
 import pandas as pd
 import os, time, logging
-from sklearn.preprocessing import scale
+import json
 from scipy import stats
 from scipy.stats import ranksums
+# import pytadbit.tadbit as pytadbit # Only on Linux
 
 from abc import ABC, abstractmethod
+
+def TAD_class_to_str(algo):
+    if algo == TopDom:
+        return 'TopDom'
+    elif algo == TADtree:
+        return 'TADtree'
+    elif algo == OnTAD:
+        return 'OnTAD'
+    elif algo == TADbit:
+        return 'TADbit'
+    else:
+        return 'unknown'
+
+def str_to_TAD_class(algo_str):
+    if algo_str == 'TopDom':
+        return TopDom
+    elif algo_str == 'TADtree':
+        return TADtree
+    elif algo_str == 'OnTAD':
+        return OnTAD
+    elif algo_str == 'TADbit':
+        return TADbit
+    else:
+        return None
 
 class TADsDetector(ABC):
     @abstractmethod
@@ -13,7 +38,14 @@ class TADsDetector(ABC):
         pass
 
 class TopDom(TADsDetector):
-    def getTADs(self, hic_obj, window=5):
+    def getTADs(self, hic_obj, window=None):
+        if not window:
+            if hic_obj.resolution == 25000:
+                window = 4
+            elif hic_obj.resolution == 100000:
+                window = 2
+            else:
+                raise Exception("Window size not specified and resolution not supported. Please specify window size.")
         # Run different steps of the algorithm
         binsignal = self.TopDomStep1(hic_obj.original_matrix, window)
         binextremums = self.TopDomStep2(hic_obj.regions, binsignal, window)
@@ -127,26 +159,29 @@ class TopDom(TADsDetector):
 
 
 class TADtree(TADsDetector):
-    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=3, q=12, gamma=500, N=400):
+    def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=2, q=12, gamma=500, N=500):
         if not os.path.isfile(path_to_TADtree):
             raise Exception("TADtree.py not found")
+        if hic_obj.resolution != 100000:
+            raise Exception('TADtree is mean to be called with 100kb data only')
         # TODO: Check
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
-        output_folder='TADtree_outputs'
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         result_path = os.path.join(folder_path, output_folder, chrom_data_filename.split('_')[0], 'N{}.txt'.format(int(N-1)))
         if not os.path.isfile(result_path):
-            self.runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S, M, p, q, gamma, N, output_folder)
+            self.runSingleTADtree(path_to_TADtree, folder_path, chrom_data_filename, S, M, p, q, gamma, N)
 
         tads_by_tadtree = pd.read_csv(result_path, delimiter='\t')
         tads_by_tadtree = tads_by_tadtree.iloc[:, [1,2]]
         tads = []
         for i in range(len(tads_by_tadtree['start'])):
-            tads.append((tads_by_tadtree['start'][i], tads_by_tadtree['end'][i]))
+            tads.append((int(tads_by_tadtree['start'][i]*hic_obj.resolution), int(tads_by_tadtree['end'][i]*hic_obj.resolution)))
         return tads
     
-    def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runMultipleTADtree(self, path_to_TADtree, folder_path, chrom_data_filenames, S=30, M=10, p=3, q=12, gamma=500, N=400):
         chrom_names = [chrom.split('_')[0] for chrom in chrom_data_filenames]
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))
         # construct the controle file (conatining parameters of TADtree)
@@ -167,8 +202,9 @@ class TADtree(TADsDetector):
         os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
         return chrom_names
 
-    def runSingleTADtree(self, path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400, output_folder='TADtree_outputs'):
+    def runSingleTADtree(self, path_to_TADtree, folder_path, chrom_data_filename, S=30, M=10, p=3, q=12, gamma=500, N=400):
         chrom_name = chrom_data_filename.split('_')[0]
+        output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
         if not os.path.isdir(os.path.join(folder_path, output_folder)):
             os.mkdir(os.path.join(folder_path, output_folder))
         # construct the controle file (conatining parameters of TADtree)
@@ -183,3 +219,63 @@ class TADtree(TADsDetector):
         os.system('python '+path_to_TADtree+' '+os.path.join(folder_path, 'control_file.txt'))
         os.rename(os.path.join(folder_path, 'control_file.txt'), os.path.join(folder_path, output_folder, 'control_file.txt'))
         return chrom_name
+
+class OnTAD(TADsDetector):
+    def getTADs(self, hic_obj, min_size=100000, max_size=3000000, penalty=0.1, ldiff=1.96, wsize=100000, log2=False):
+        folder_path = hic_obj.get_folder()
+        chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
+        lsize = int(wsize/hic_obj.resolution)
+        maxsz = int(max_size/hic_obj.resolution)
+        minsz = int(min_size/hic_obj.resolution)
+        if not os.path.isdir(os.path.join(folder_path, 'OnTAD')):
+            os.mkdir(os.path.join(folder_path, 'OnTAD'))
+        if log2:
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}_log2".format(penalty)))
+        else:
+            chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}".format(penalty)))
+        if not os.path.isfile(chrom_tad_output + '.tad'):
+            data_file = os.path.join(folder_path, chrom_data_filename)
+            self.runSingleTAD(data_file, chrom_tad_output, maxsz=maxsz, minsz=minsz, penalty=penalty, ldiff=ldiff, lsize=lsize, log2=log2)
+        tads = []
+        # startpos  endpos  TADlevel  TADmean  TADscore
+        with open(chrom_tad_output + '.tad', 'r') as f:
+            tad_lines = f.readlines()    
+            for line in tad_lines:
+                start, end, level, mean, score = line.strip().split('\t')
+                start, end, level, mean, score = int(start), int(end), int(level), float(mean), float(score)
+                tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
+        return tads
+
+    def runSingleTAD(self, in_file, out_file, maxsz, minsz, penalty, ldiff, lsize, log2):
+        # TODO: Check parameters
+        if log2:
+            os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -log2 -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
+        else:
+            os.system('./exe/OnTAD {} -maxsz {} -minsz {} -penalty {} -ldiff {} -lsize {} -o {}'.format(in_file, maxsz, minsz, penalty, ldiff, lsize, out_file))
+
+
+class TADbit(TADsDetector):
+    def getTADs(self, hic_obj, max_size=3000000, score_threshold=None):
+        folder_path = hic_obj.get_folder()
+        if not os.path.isdir(os.path.join(folder_path, 'TADbit')):
+            os.mkdir(os.path.join(folder_path, 'TADbit'))
+        out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
+        if not os.path.isfile(os.path.join(folder_path, 'TADbit', out_file)):
+            self.runSingleTAD(hic_obj, max_size=max_size)
+        with open(os.path.join(folder_path, 'TADbit', out_file), "r+") as f:
+            results = json.load(f)
+        assert len(results['start']) == len(results['end']) and len(results['start']) == len(results['score'])
+        tads = []
+        for start, end, score in zip(results['start'], results['end'], results['score']):
+            if not score_threshold or (score and score >= score_threshold):
+                tads.append((int(start*hic_obj.resolution), int(end*hic_obj.resolution)))
+        return tads
+
+    def runSingleTAD(self, hic_obj, max_size):
+        max_size = int(max_size/hic_obj.resolution)
+        folder_path = hic_obj.get_folder()
+        chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
+        results = pytadbit(os.path.join(folder_path, chrom_data_filename), n_cpus='max', max_tad_size=max_size)
+        out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
+        with open(os.path.join(folder_path, 'TADbit', out_file), "w") as f:
+            json.dump(results, f)

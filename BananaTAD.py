@@ -1,3 +1,5 @@
+from logging import warning
+import platform
 import sys, argparse, os, json
 from src.metrics import compare_to_groundtruth
 from src.data import Hicmat, load_hic_groundtruth, preprocess_file
@@ -45,6 +47,13 @@ def parse_arguments():
         default = None,
         help="Folder containing the ground truth files",
     )
+
+    parser.add_argument(
+        "--with_score",
+        default=False,
+        action='store_true',
+        help="If set, the program will produce the files as a dict with TADs scores inside",
+    )
     return parser.parse_args()
 
 args = parse_arguments()
@@ -53,6 +62,9 @@ data_path = os.path.splitext(raw_path)[0] + '.npy'
 
 if args.resolution not in [25000, 100000]:
     sys.exit("BananaTAD support only resolution of 25kb or 100kb.")
+
+if platform.system() != 'Linux':
+    warning("BananaTAD is using TADbit and OnTAD, which are Linux-only. Please compute results on a Linux machine - you can still use BananaTAD (with our BordersConsensus method) if the OnTAD and TADbit were previously computed.")
 
 assert not args.metrics_mode or args.gt_folder is not None, "If metrics_mode is set, gt_folder must be set" 
 
@@ -74,6 +86,10 @@ if args.metrics_mode:
     savefile.close()
 else:
     savefile = open(os.path.join(hic_mat.get_folder(), hic_mat.get_name().replace('.npy', '.bananatads')), 'w+')
-    final_tads_scores = consensus_method.get_consensus(hic_mat=hic_mat) # TADs scores '(from, to):score'
-    savefile.write('{}'.format(final_tads_scores))
+    if args.with_score:
+        final_tads_scores = consensus_method.get_consensus(hic_mat=hic_mat) # TADs scores '(from, to):score'
+        savefile.write('{}'.format(final_tads_scores))
+    else:
+        final_tads = consensus_method.get_consensus_tads(hic_mat=hic_mat) # TADs '(from, to)'
+        savefile.write('{}'.format(final_tads))
     savefile.close()

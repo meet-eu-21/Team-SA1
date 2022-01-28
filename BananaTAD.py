@@ -73,6 +73,7 @@ if args.metrics_mode:
     savefile.write('METRICS: (Ground Truth Rate: {}, Predicted Rate: {})\n'.format(gt_rate_final, pred_rate_final))
     savefile.close()
 else:
+    savefile = open(os.path.join(hic_mat.get_folder(), hic_mat.get_name().replace('.npy', '.bananatads')), 'w+')
     final_tads_scores = consensus_method.get_consensus(hic_mat=hic_mat) # TADs scores '(from, to):score'
-    with open(os.path.join(hic_mat.get_folder(), hic_mat.get_name().replace('.npy', '.json')), "w") as f:
-        json.dump(final_tads_scores, f)
+    savefile.write('{}'.format(final_tads_scores))
+    savefile.close()

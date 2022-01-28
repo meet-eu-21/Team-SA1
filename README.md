@@ -3,6 +3,21 @@
 <h2 align="center"><img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> Meet-EU Team SA1: <img src="https://img.icons8.com/external-justicon-flat-justicon/64/000000/external-france-countrys-flags-justicon-flat-justicon.png", width="20"/> </h2>
 <h4 align="center"> A. Marina, C. Simon, L. Liam, T. Alexis, Z. Yann
 
+
+## Use Case: Command line to run Banana-TAD on a single file
+### Installing the Conda environment
+After cloning the repo locally, with Anaconda/Miniconda previously installed, the Conda environment 'meet-u' can be created with the following command:
+```bash
+conda env create --file BananaTAD_linux.yaml
+```
+### Basic usage
+This command saves the list of all consensus TADs of the chromosome chr1 (from cell type GM12878) at 100kb resolution as tuples (start, end).
+```bash
+python BananaTAD.py --folder data/example --file chr1_100kb.RAWobserved --cell_type GM12878 --resolution 100000 --chrom 1
+```
+`arrowhead` `topdom` `tadtree` `ontad` `tadbit`
+
+
 ## Background
 ### What is this?
 This GitHub page is a project for the Meet-EU course at Sorbonne University on the creation and improvement of algorithms and methods for TAD detection (explained in more detail below).
@@ -39,14 +54,6 @@ The respective folders for this GitHub are:
   - TADs_length_analysis: contains histograms of distribution of TAD lengths, and fitting curves for this metric.
   - ADD FUTUR RESULT FOLDERS HERE
 - src: contains the different python scripts that are used for our project.<img src="https://img.icons8.com/color/25/000000/property-script.png"/>
-
-
-## Command line to run Banana-TAD on a single 100kb file
-The following example should be run after cloning the repo locally. This command saves the list of all consensus TADs of the chromosome at 100kb resolution as tuples (start, end).
-```bash
-python BananaTAD.py --folder data\example --file chr1_100kb.RAWobserved --cell_type GM12878 --resolution 100000 --chrom 1
-```
-`arrowhead` `topdom` `tadtree` `ontad` `tadbit`
 
 ## Credit
 Icons embedded from [icons8](https://icons8.com/), all rights belonging to their respective owners.

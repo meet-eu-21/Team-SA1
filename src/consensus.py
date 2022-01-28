@@ -250,4 +250,3 @@ class BordersConsensus(ConsensusMethod):
                     algo_performances[algo]['100000'] = (gt_rates_100kb, pred_rates_100kb)
             
         return algo_performances
-

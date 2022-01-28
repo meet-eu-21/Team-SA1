@@ -10,6 +10,9 @@ if platform.system() == 'Linux':
 
 from abc import ABC, abstractmethod
 
+"""
+Utility function to get the string from the TAD Caller instance
+"""
 def TAD_class_to_str(algo):
     if algo == TopDom:
         return 'TopDom'
@@ -22,6 +25,9 @@ def TAD_class_to_str(algo):
     else:
         return 'unknown'
 
+"""
+Utility function to get the TAD Caller instance from the string
+"""
 def str_to_TAD_class(algo_str):
     if algo_str == 'TopDom':
         return TopDom
@@ -34,13 +40,29 @@ def str_to_TAD_class(algo_str):
     else:
         return None
 
+"""
+Abstract class for TAD Callers
+"""
 class TADsDetector(ABC):
     @abstractmethod
     def getTADs(self, hic_obj):
         pass
 
+
 class TopDom(TADsDetector):
     def getTADs(self, hic_obj, window=None):
+        """TopDom TAD Caller - Manually reimplemented
+
+        Args:
+            hic_obj (Hicmat): Container of HiC 
+            window (int, optional): Parameter of TopDom. Defaults to None.
+
+        Raises:
+            Exception: Resolution unsupported by TopDom
+
+        Returns:
+            list of 2-tuples: List of TADs (from, to)
+        """
         if not window:
             if hic_obj.resolution == 25000:
                 window = 4
@@ -66,6 +88,9 @@ class TopDom(TADsDetector):
         return tads # Exporting TADs as tuple (from, to)
 
     def TopDomStep1(self, matrix, window):
+        """
+        Step 1: Generating binSignals by computing bin-level contact frequencies
+        """
         print("TopDom Step 1 : Generating binSignals by computing bin-level contact frequencies")
         nbins = matrix.shape[0]
         binsignal = np.zeros(nbins)
@@ -87,6 +112,9 @@ class TopDom(TADsDetector):
         return binsignal
 
     def findLocalExtremums(self, binsignal, window):
+        """
+        Find local minimas and maximas in a given window
+        """
         binextremums = np.zeros(len(binsignal))
         for i in range(len(binsignal)):
             # On a window, look if the binSignal is a local minimum or maximum
@@ -100,7 +128,9 @@ class TopDom(TADsDetector):
         return binextremums
 
     def TopDomStep2(self, regions, binsignal, window):
-        # TODO: Review the step 2 to fit curve before capturing local minimas
+        """
+        Step 2: Detect TD boundaries based on binSignals
+        """
         print("TopDom Step 2 : Detect TD boundaries based on binSignals")
         binextremums = np.zeros(len(binsignal))
         for start,end in regions:
@@ -109,6 +139,7 @@ class TopDom(TADsDetector):
         
 
     def getFlattenDiamond(self, matrix, i, window):
+        """Get Flatten Diamond of a given bin"""
         n_bins = matrix.shape[0]
         new_matrix = np.zeros((window, window))
         # Get diamond corresponding to the index - by creating new_matrix
@@ -120,6 +151,7 @@ class TopDom(TADsDetector):
         return new_matrix.flatten() # Flatten the matrix
 
     def getUpstream(self, matrix, i, window):
+        """Get Upstream triangle of a given bin"""
         # Get the triangle upstream to the index
         n_bins = matrix.shape[0]
         lower = max(0, i-window)
@@ -127,6 +159,7 @@ class TopDom(TADsDetector):
         return new_matrix[np.triu_indices(new_matrix.shape[0], k=1)]
 
     def getDownstream(self, matrix, i, window):
+        """Get Downstream triangle of a given bin"""
         # get the triangle downstream to the index
         n_bins = matrix.shape[0]
         upper = min(n_bins, i+window)
@@ -135,6 +168,7 @@ class TopDom(TADsDetector):
 
     # Pass the submatrix as argument
     def getPValue(self, matrix, window, scale=1):
+        """Get the p-value of a given bin, comparing between its diamond and its upstream and downstream triangles"""
         pvalues = np.ones(matrix.shape[0])
         n_bins = matrix.shape[0]
         for i in range(n_bins):
@@ -149,8 +183,8 @@ class TopDom(TADsDetector):
         return pvalues
 
     def TopDomStep3(self, matrix, regions, binextremums, window):
+        """Step 3: Statistical Filtering of false positive TD boundaries"""
         print("TopDom Step 3 : Statistical Filtering of false positive TD boundaries")
-        # TODO: Scale matrix before?
         pvalues = np.ones(len(binextremums))
         for start,end in regions:
             pvalues[start:end] = self.getPValue(matrix[start:end, start:end], window, scale=1)
@@ -162,11 +196,29 @@ class TopDom(TADsDetector):
 
 class TADtree(TADsDetector):
     def getTADs(self, hic_obj, path_to_TADtree='exe/TADtree.py', S=30, M=10, p=2, q=12, gamma=500, N=500):
+        """TADtree TAD Caller
+
+        Args:
+            hic_obj (Hicmat): Container of HiC.
+            path_to_TADtree (str, optional): Defaults to 'exe/TADtree.py'.
+            S (int, optional): Defaults to 30.
+            M (int, optional): Defaults to 10.
+            p (int, optional): Defaults to 2.
+            q (int, optional): Defaults to 12.
+            gamma (int, optional): Defaults to 500.
+            N (int, optional): Defaults to 500.
+
+        Raises:
+            Exception: TADtree.py file were not found.
+            Exception: TADtree is called on a wrong resolution - computation too heavy on 25kb data.
+
+        Returns:
+            list of 2-tuples: List of TADs (from, to)
+        """
         if not os.path.isfile(path_to_TADtree):
             raise Exception("TADtree.py not found")
         if hic_obj.resolution != 100000:
             raise Exception('TADtree is mean to be called with 100kb data only')
-        # TODO: Check
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
         output_folder = 'TADtree_outputs_p{}_S{}_M{}_q{}_gamma{}'.format(p, S, M, q, gamma)
@@ -224,6 +276,21 @@ class TADtree(TADsDetector):
 
 class OnTAD(TADsDetector):
     def getTADs(self, hic_obj, min_size=100000, max_size=3000000, penalty=0.1, ldiff=1.96, wsize=100000, log2=False):
+        """OnTAD TAD Caller
+
+        Args:
+            hic_obj (Hicmat): Container of HiC.
+            min_size (int, optional): Defaults to 100000.
+            max_size (int, optional): Defaults to 3000000.
+            penalty (float, optional): Defaults to 0.1.
+            ldiff (float, optional): Defaults to 1.96.
+            wsize (int, optional): Defaults to 100000.
+            log2 (bool, optional): Defaults to False.
+
+        Returns:
+            list of 2-tuples: List of TADs (from, to)
+        """
+        # Prepare parameters
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
         lsize = int(wsize/hic_obj.resolution)
@@ -235,11 +302,14 @@ class OnTAD(TADsDetector):
             chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}_log2".format(penalty)))
         else:
             chrom_tad_output = os.path.join(folder_path, 'OnTAD', chrom_data_filename.replace(".txt", "_p{}".format(penalty)))
+
+        # Run OnTAD
         if not os.path.isfile(chrom_tad_output + '.tad'):
             data_file = os.path.join(folder_path, chrom_data_filename)
             self.runSingleTAD(data_file, chrom_tad_output, maxsz=maxsz, minsz=minsz, penalty=penalty, ldiff=ldiff, lsize=lsize, log2=log2)
         tads = []
-        # startpos  endpos  TADlevel  TADmean  TADscore
+
+        # Load results - format: startpos  endpos  TADlevel  TADmean  TADscore
         with open(chrom_tad_output + '.tad', 'r') as f:
             tad_lines = f.readlines()    
             for line in tad_lines:
@@ -249,7 +319,7 @@ class OnTAD(TADsDetector):
         return tads
 
     def runSingleTAD(self, in_file, out_file, maxsz, minsz, penalty, ldiff, lsize, log2):
-        # TODO: Check parameters
+        # Run OnTAD command line
         if not platform.system() == 'Linux':
             raise Exception('OnTAD is functional under Linux only!')
         if log2:
@@ -260,15 +330,32 @@ class OnTAD(TADsDetector):
 
 class TADbit(TADsDetector):
     def getTADs(self, hic_obj, max_size=3000000, score_threshold=None):
+        """TADbit TAD Caller
+
+        Args:
+            hic_obj (Hicmat): Container of HiC.
+            max_size (int, optional): Defaults to 3000000.
+            score_threshold (optional): Defaults to None.
+
+        Returns:
+            Container of HiC.
+        """
+        # Prepare parameters
         folder_path = hic_obj.get_folder()
         if not os.path.isdir(os.path.join(folder_path, 'TADbit')):
             os.mkdir(os.path.join(folder_path, 'TADbit'))
         out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
+
+        # Run TADbit
         if not os.path.isfile(os.path.join(folder_path, 'TADbit', out_file)):
             self.runSingleTAD(hic_obj, max_size=max_size)
+
+        # Load results
         with open(os.path.join(folder_path, 'TADbit', out_file), "r+") as f:
             results = json.load(f)
         assert len(results['start']) == len(results['end']) and len(results['start']) == len(results['score'])
+
+        # Modify TADs format
         tads = []
         for start, end, score in zip(results['start'], results['end'], results['score']):
             if not score_threshold or (score and score >= score_threshold):
@@ -278,10 +365,15 @@ class TADbit(TADsDetector):
     def runSingleTAD(self, hic_obj, max_size):
         if not platform.system() == 'Linux':
             raise Exception('TADbit is functional under Linux only!')
+        # Prepare parameters
         max_size = int(max_size/hic_obj.resolution)
         folder_path = hic_obj.get_folder()
         chrom_data_filename = hic_obj.get_name().replace(".npy",".txt")
+
+        # Call TADbit functions
         results = pytadbit(os.path.join(folder_path, chrom_data_filename), n_cpus='max', max_tad_size=max_size)
+
+        # Save results
         out_file = hic_obj.get_name().replace(".npy", "_tadbit.json")
         with open(os.path.join(folder_path, 'TADbit', out_file), "w") as f:
             json.dump(results, f)

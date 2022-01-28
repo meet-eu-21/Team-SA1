@@ -10,7 +10,7 @@ from src.ctcf import bedPicks, checkCTCFcorrespondance
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit, TAD_class_to_str, str_to_TAD_class
 
 
-# Class which regroups all the consensus methods (only one for the moment)
+# Class with the consensus method
 class ConsensusMethod(ABC):
     def get_consensus(self, TADs):
         pass
@@ -28,7 +28,7 @@ class BordersConsensus(ConsensusMethod):
                 'NHEK':'data/CTCF/NHEK/ENCFF351YOQ.bed'
             }
 
-        # Implement score as CTCF*(M_1 + M2)
+        # Implement score as CTCF*(M_gt + M_pred)/2
         self.algo_scores = {
                 'TADtree': {'25000': np.NaN, '100000': np.NaN},
                 'TopDom': {'25000': np.NaN, '100000': np.NaN},
@@ -40,7 +40,7 @@ class BordersConsensus(ConsensusMethod):
         # used methods according to the resolution
         self.algo_usage = {'25000': ['TopDom', 'OnTAD'], '100000': ['TopDom', 'TADtree', 'TADbit']}
 
-        # weight of the CTCF metric and the both metrics which compare a method with the groundtruth
+        # weight of the CTCF, M_gt, M_pred metrics
         self.ctcf_coeff = ctcf_coeff / ((ctcf_coeff + metrics_coeff) / 2)
         self.metrics_coeff = metrics_coeff / ((ctcf_coeff + metrics_coeff) / 2)
 
@@ -58,11 +58,11 @@ class BordersConsensus(ConsensusMethod):
         ----------
         INPUT
         all_algo_TADs : dict
-            dicitonary associating algorithm with the TADs found by it on the chromosome
+            dicitonary associating algorithm with the TADs found in a chromosome
         resolution : int
             resolution of the HiC data
         ctcf_width_region : int
-            maximum distance between a TAD boundary and a CTCF peaks to consider them like the same
+            maximum distance between a TAD boundary and a CTCF peaks to consider them the same
         -----------
         OUTPUT
         dictionary of all positions associating to their score
@@ -81,13 +81,13 @@ class BordersConsensus(ConsensusMethod):
 
     def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold):
         """
-        construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
+        construct the TADs from a list of scored boundaries that we filter  
         ----------
         INPUT
         hic_mat : Hicmat object 
-            contains all the necessary informations on the HiC data of the chromosome
+            contains all the necessary informations about the HiC data of the chromosome
         dict_pos_score : dict
-            dictionary of all positions associating to their score
+            dictionary of all positions associated to their score
         lim : int
             maximum size of a TAD
         min_size : int
@@ -97,7 +97,7 @@ class BordersConsensus(ConsensusMethod):
         -----------
         OUTPUT
         output_tads : list of tuples
-            list of TADs contained in tuples (from, to)
+            list of TADs tuples (from, to)
         """
         lim = round(lim/hic_mat.resolution)
         minsz = round(min_size/hic_mat.resolution)
@@ -146,7 +146,7 @@ class BordersConsensus(ConsensusMethod):
                         return False
         return True
 
-    # Get only the positions of the TADs without the scores
+    
     def get_consensus_tads(self, hic_mat, threshold=-1, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
         """
         Get only the positions of the TADs without the scores
@@ -157,7 +157,7 @@ class BordersConsensus(ConsensusMethod):
         threshold : int
             thresold that determines if the position has a high enough score to be kept
         ctcf_width_region : int
-            maximum distance between a TAD boundary and a CTCF peaks to consider them like the same
+            maximum distance between a TAD boundary and a CTCF peaks to consider them the same
         min_tad_size : int
             minimum size of a TAD
         max_tad_size : int
@@ -173,10 +173,10 @@ class BordersConsensus(ConsensusMethod):
                 threshold = 20
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
-    # Get the consensus from an object from the Hicmat class
+    
     def get_consensus(self, hic_mat, threshold=-1, ctcf_width_region=4, min_size=125000, lim=3000000):
         """
-        Apply the different algorithms necessary to the consensus and get the TADs associating to their score thanks to the consensus method
+        Apply different algorithms necessary for the consensus and return the TADs with their score 
         ----------
         INPUT
         hic_mat : Hicmat object 
@@ -184,7 +184,7 @@ class BordersConsensus(ConsensusMethod):
         threshold : int
             thresold that determines if the position has a high enough score to be kept
         ctcf_width_region : int
-            maximum distance between a TAD boundary and a CTCF peaks to consider them like the same
+            maximum distance between a TAD boundary and a CTCF peaks to consider them the same
         min_size : int
             minimum size of a TAD
         lim : int
@@ -199,7 +199,6 @@ class BordersConsensus(ConsensusMethod):
                 threshold = 35
             elif hic_mat.resolution == 100000:
                 threshold = 20
-        
         all_tads = {}
         for algo in self.algo_scores.keys():
             if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
@@ -245,10 +244,10 @@ class BordersConsensus(ConsensusMethod):
         ----------
         INPUT
         development_set : list of str
-            list of file paths contained in the training set
+            list of file paths contained in the training dataset
         -----------
         OUTPUT
-        a file containing score of each method
+        a file containing scores of each method
         """
         logging.info('Evaluating algorithm scores')
         score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
@@ -281,12 +280,12 @@ class BordersConsensus(ConsensusMethod):
     
     def set_scores(self):
         """
-        Recompute weight of each method with potentials different coefficients, without recompute on all the training dataset
+        Recompute weight of each method with potentials different coefficients, without recomputing on all the training dataset
         ----------
         INPUT
         -----------
         OUTPUT
-        a file containing score of each method
+        a file containing scores of each method
         """
         logging.info('Setting algorithm scores')
         score_save_path = os.path.join('saves', 'algo_scores_consensus.json')
@@ -317,7 +316,7 @@ class BordersConsensus(ConsensusMethod):
             list of file paths contained in the training set
         -----------
         OUTPUT
-        a file containing the average CTCF corespondence for each method
+        a file containing the average CTCF correspondence for each method
         """
         logging.info('Computing CTCF scores on intrachromosomal HiC data')
         set_25kb = []

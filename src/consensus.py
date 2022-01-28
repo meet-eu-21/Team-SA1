@@ -9,11 +9,14 @@ from src.ctcf import bedPicks, checkCTCFcorrespondance
 from src.tad_algo import TopDom, TADtree, OnTAD, TADbit, TAD_class_to_str, str_to_TAD_class
 
 
+# Class which regroups all the consensus methods (only one for the moment)
 class ConsensusMethod(ABC):
     def get_consensus(self, TADs):
         pass
 
+# Class of the consensus method
 class BordersConsensus(ConsensusMethod):
+    # Constructor with default parameters
     def __init__(self, ctcf_coeff=1, metrics_coeff=1, init=False, check_filtered=False) -> None:
         # path to file containing CTCF positions
         self.ctcf = {
@@ -41,17 +44,19 @@ class BordersConsensus(ConsensusMethod):
         self.ctcf_coeff = ctcf_coeff / ((ctcf_coeff + metrics_coeff) / 2)
         self.metrics_coeff = metrics_coeff / ((ctcf_coeff + metrics_coeff) / 2)
 
+        #  filter the TADs which overlap the missing data regions
         self.check_filtered = check_filtered
+
 
         if init:
             self.set_scores()
     
-    # get the TADs boundaries of each method and give them a score
+    # get the TADs boundaries of each method and give them a score based on the score of each method
     def get_all_boundaries(self, all_algo_TADs, resolution, ctcf_width_region=4):
         dict_pos_score = {}
         for algo, tads in all_algo_TADs.items():
             for tad in tads:
-                for i in range(-ctcf_width_region, ctcf_width_region+1):
+                for i in range(-ctcf_width_region, ctcf_width_region+1): # also add a score to the nearest positions with smaller scores
                     idx_tad = int( (tad[0]+i) / resolution)
                     if idx_tad in dict_pos_score:
                         dict_pos_score[idx_tad] += self.algo_scores[algo]['{}'.format(resolution)] * (1/pow(2, abs(i))) # TODO: Find which law to use (Normal? Log?)

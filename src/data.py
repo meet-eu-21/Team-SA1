@@ -33,6 +33,15 @@ def load_hic(path, resolution):
 		set_score(matrix, line)
 	return matrix
 
+
+def preprocess_file(file_path, resolution):
+	m = load_hic(file_path, resolution=resolution)
+	# put the matrix in a numpy file
+	np.save(file_path.replace(".RAWobserved",".npy"), m)
+	# put the matrix in a .txt (for TADtree)
+	np.savetxt(file_path.replace(".RAWobserved",".txt"), m, delimiter=' ', fmt='%d')
+	logging.info('Preprocessing: file {} preprocessed'.format(file_path.split(os.path.sep)[-1:]))
+
 # preprocess all the Hic files contained in a folder (with the same resolution)
 def preprocess_data(folder, resolution):
 	start_time = time.time()
@@ -41,12 +50,7 @@ def preprocess_data(folder, resolution):
 	logging.info('\tPreprocessing of folder {} started...'.format(folder))
 	for f in os.listdir(folder):
 		if f.endswith('.RAWobserved'):
-			m = load_hic(os.path.join(folder, f), resolution=resolution)
-			# put the matrix in a numpy file
-			np.save(os.path.join(folder, f.replace(".RAWobserved",".npy")), m)
-			# put the matrix in a .txt (for TADtree)
-			np.savetxt(os.path.join(folder, f.replace(".RAWobserved",".txt")), m, delimiter=' ', fmt='%d')
-			logging.info('Preprocessing: file {} preprocessed'.format(f))
+			preprocess_file(os.path.join(folder, f), resolution)
 		else:
 			logging.info('Preprocessing: file {} skipped'.format(f))
 	logging.info("Preprocessing finished after {} seconds".format(time.time() - start_time))
@@ -129,17 +133,20 @@ class Hicmat:
 		# froze the original matrix in another variable
 		self.original_matrix = np.array(m)
 		self.filtered_coords = None
-		self.reduced_matrix = None
+		self.reduced_matrix = None # matrix without regions with unsufficient signal
 		self.regions = None
-		# matrix without missing data
+		
+		# Filter the matrix if auto_filtering is True
 		if auto_filtering:
 			self.filter(threshold=1)
-		# 
+		
+		# Set cell type
 		self.set_cell_type(cell_type)
 
 	def set_cell_type(self, cell_type):
 		path_comps = self.path.split(os.sep)
 
+		# If present in the path, automatically extract the cell type
 		if 'GM12878' in path_comps:
 			self.cell_type = 'GM12878'
 		elif 'HMEC' in path_comps:
@@ -151,6 +158,7 @@ class Hicmat:
 		elif 'NHEK' in path_comps:
 			self.cell_type = 'NHEK'
 		else:
+			# Else, use the cell_type argument
 			if cell_type is not None:
 				self.cell_type = cell_type
 			else:

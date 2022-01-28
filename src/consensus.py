@@ -146,8 +146,8 @@ class BordersConsensus(ConsensusMethod):
                         return False
         return True
 
-    
-    def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
+    # Get only the positions of the TADs without the scores
+    def get_consensus_tads(self, hic_mat, threshold=-1, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
         """
         Get only the positions of the TADs without the scores
         ----------
@@ -166,10 +166,15 @@ class BordersConsensus(ConsensusMethod):
         OUTPUT
         list of tuple containing TADs boundaries
         """
+        if threshold == -1:
+            if hic_mat.resolution == 25000:
+                threshold = 35
+            elif hic_mat.resolution == 100000:
+                threshold = 20
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
-    
-    def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=125000, lim=3000000):
+    # Get the consensus from an object from the Hicmat class
+    def get_consensus(self, hic_mat, threshold=-1, ctcf_width_region=4, min_size=125000, lim=3000000):
         """
         Apply the different algorithms necessary to the consensus and get the TADs associating to their score thanks to the consensus method
         ----------
@@ -189,6 +194,12 @@ class BordersConsensus(ConsensusMethod):
         dict associating a tuple containing TADs boundaries with its score
         """
         # TODO: Add default behaviour if resolution is neither 25000 nor 100000
+        if threshold == -1:
+            if hic_mat.resolution == 25000:
+                threshold = 35
+            elif hic_mat.resolution == 100000:
+                threshold = 20
+        
         all_tads = {}
         for algo in self.algo_scores.keys():
             if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:

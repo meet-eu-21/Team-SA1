@@ -27,7 +27,6 @@ class BordersConsensus(ConsensusMethod):
                 'IMR90':'data/CTCF/IMR90/ENCFF203SRF.bed',
                 'NHEK':'data/CTCF/NHEK/ENCFF351YOQ.bed'
             }
-        # TODO: Use algos for some resolution only
 
         # Implement score as CTCF*(M_1 + M2)
         self.algo_scores = {
@@ -35,7 +34,7 @@ class BordersConsensus(ConsensusMethod):
                 'TopDom': {'25000': np.NaN, '100000': np.NaN},
                 'arrowhead': np.NaN, # Check Ground Truth
                 'OnTAD': {'25000': np.NaN, '100000': np.NaN}, # TODO: Check OnTAD issue on 100kb
-                'TADbit': {'25000': np.NaN, '100000': np.NaN} # TODO: Check TADbit performance
+                'TADbit': {'25000': np.NaN, '100000': np.NaN}
         }
 
         # used methods according to the resolution
@@ -66,7 +65,7 @@ class BordersConsensus(ConsensusMethod):
         return dict(sorted(dict_pos_score.items(), key=lambda x:x[0]))
 
     # construct the TADs from a list of scores boundaries that we filter to keep the best boundaries
-    def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold): # TODO: Tune threshold
+    def construct_tads(self, hic_mat, dict_pos_score, lim, min_size, threshold):
         lim = round(lim/hic_mat.resolution)
         minsz = round(min_size/hic_mat.resolution)
         assert lim>minsz
@@ -104,11 +103,11 @@ class BordersConsensus(ConsensusMethod):
         return True
 
     def get_consensus_tads(self, hic_mat, threshold=10, ctcf_width_region=4, min_tad_size=125000, max_tad_size=3000000):
-        #TODO: Implement min_tad_size
         return [k for k in self.get_consensus(hic_mat, threshold, ctcf_width_region, min_tad_size, max_tad_size).keys()]
     
     # Get the consensus from a dictionary associating methods to their TADs founds on a chromosome    
     def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=125000, lim=3000000):
+        # TODO: Add default behaviour if resolution is neither 25000 nor 100000
         all_tads = {}
         for algo in self.algo_scores.keys():
             if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:

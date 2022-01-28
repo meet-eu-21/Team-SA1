@@ -1,5 +1,6 @@
 from abc import ABC
 import logging, os, tqdm, io, contextlib, json, logging
+import math
 import numpy as np
 
 from src.metrics import compare_to_groundtruth
@@ -110,9 +111,9 @@ class BordersConsensus(ConsensusMethod):
     def get_consensus(self, hic_mat, threshold, ctcf_width_region=4, min_size=125000, lim=3000000):
         all_tads = {}
         for algo in self.algo_scores.keys():
-            if self.algo_scores[algo] == np.NaN:
-                raise ValueError('ScoreConsensus not trained')
-            elif algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
+            if algo in self.algo_usage['{}'.format(hic_mat.resolution)]:
+                if math.isnan(self.algo_scores[algo]):
+                    raise ValueError('ScoreConsensus not trained')
                 tad_caller = str_to_TAD_class(algo)()
                 all_tads[algo] = tad_caller.getTADs(hic_mat)
         return self.build_consensus(hic_mat, all_tads, threshold, ctcf_width_region, min_size, lim)

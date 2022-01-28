@@ -10,7 +10,7 @@ def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
         list containing the CTCF peaks
     tads : list of tuples
         list containing all the TADs in tuple (from, to)
-    ctcf_allowed_distance :
+    ctcf_allowed_distance : int
         maximum distance between a TAD boundary and a CTCF peaks to consider them like the same
     -----------
     OUTPUT
@@ -28,7 +28,7 @@ def checkCTCFcorrespondance(ctcf_df, tads, ctcf_allowed_distance=50000):
                 tads_borders_ctcf.add(tad[1])
     return round(len(tads_borders_ctcf)/max(1,len(all_borders)), 4)
 
-# 
+
 def bedPicks(file, chrom):
     """
     Get all CTCF peaks of a chromosome 

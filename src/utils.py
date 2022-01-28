@@ -4,7 +4,7 @@ import os
 
 
 def read_arrowhead_result(path, chromosome):
-	"""
+    """
     Load the available ArrowHead results and put them in a tuples list
     ----------
     INPUT
@@ -39,10 +39,10 @@ def SCN(D, max_iter = 10):
     OUTPUT
     return a numpy matrix
     """
-	for i in range(max_iter):
-		D = np.divide(D, np.maximum(1, D.sum(axis = 0)))       
-		D = np.divide(D, np.maximum(1, D.sum(axis = 1)))    
-	return (D + D.T)/2 # To make matrix symetric again
+    for i in range(max_iter):
+        D = np.divide(D, np.maximum(1, D.sum(axis = 0)))       
+        D = np.divide(D, np.maximum(1, D.sum(axis = 1)))    
+    return (D + D.T)/2 # To make matrix symetric again
 
 def chrom_name_to_variables(chrom_name):
     """
@@ -58,17 +58,17 @@ def chrom_name_to_variables(chrom_name):
     cell_type : str
         name of the cell type
     """
-	len_path = len(chrom_name.split(os.path.sep))
-	chrom = chrom_name.split(os.path.sep)[len_path-1][:4]
-	if chrom[:3] != 'chr':
-		raise ValueError('Chromosome name should start with "chr"')
-	cell_type = None
-	for ct in ['GM12878', 'HMEC', 'HUVEC', 'IMR90', 'NHEK']:
-		if ct in chrom_name:
-			if not cell_type:
-				cell_type = ct
-			else: # check if only one cell type appears in the file name
-				raise ValueError('Multiple cell types in the same file')
-	if not cell_type:
-		raise ValueError('No cell type found in the file')
-	return chrom, cell_type
+    len_path = len(chrom_name.split(os.path.sep))
+    chrom = chrom_name.split(os.path.sep)[len_path-1][:4]
+    if chrom[:3] != 'chr':
+        raise ValueError('Chromosome name should start with "chr"')
+    cell_type = None
+    for ct in ['GM12878', 'HMEC', 'HUVEC', 'IMR90', 'NHEK']:
+        if ct in chrom_name:
+            if not cell_type:
+                cell_type = ct
+            else: # check if only one cell type appears in the file name
+                raise ValueError('Multiple cell types in the same file')
+    if not cell_type:
+        raise ValueError('No cell type found in the file')
+    return chrom, cell_type

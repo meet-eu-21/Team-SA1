@@ -119,7 +119,11 @@ class Hicmat:
         self.filtered_coords = None
         self.reduced_matrix = None
         self.regions = None
-        self.path = path
+        
+        if path.endswith('.npy'):
+            self.path = path
+        else:
+            self.path = path + '.npy'
 
         if auto_filtering:
             self.filter(threshold=1)

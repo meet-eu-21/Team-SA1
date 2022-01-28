@@ -13,7 +13,6 @@ Input and validation data for the project can be found [here](http://www.lcqb.up
 
 A brief intro to TADs by Leopold Carron can be found [here](https://bioinfo-fr.net/quest-ce-quun-tad-topological-associated-domain) (in French).
 
-
 ### What is a TAD?
 DNA is a greatly complex and important molecule that is often referred to as the building block of life. The entire human genome is able to fit within a single nucleus, and this is in part thanks to how efficiently DNA is able to pack and compress itself while still retaining high levels of necessary interactions for gene expression. One such unit necessary for this function is known as a Topologically Associating Domain (TAD) – a genomic region capable of high self-interaction through the presence of chromatin and loop formation. TADs are a discovery made within the last decade after the advent of chromosome conformation techniques such as Hi-C sequencing.
 
@@ -29,9 +28,10 @@ Our method, Banana-TAD, seeks to help solve this challenge by the re-implementat
 - <img src="https://img.icons8.com/external-vitaliy-gorbachev-lineal-color-vitaly-gorbachev/30/000000/external-ruler-graphic-design-vitaliy-gorbachev-lineal-color-vitaly-gorbachev.png"/> Developing a TAD **length analysis** method to help with the scoring system and maybe try to predict the distribution of TAD lengths later on (This part is very experimental and we hope more qualified researchers can use it as first step for a new method).
 - <img src="https://img.icons8.com/color/30/000000/vertical-settings-mixer--v1.png"/> **Tuning** every functions to secure the best performances based on defined metrics.
 
-## Sections and folders
-**This part needs to be updated**
+## Explanatory diagram of pipeline 
+ ![classdiag_SA1](https://user-images.githubusercontent.com/44814359/151630467-5e9d1c63-66f3-4294-b2e6-4f15aef51cac.svg)
 
+## Sections and folders
 The respective folders for this GitHub are:
 - Data: contains all the HiC raw datas for the different types of cells we studied at different resolutions, plus already detected TADs from the Arrow-Head method. <img src="https://img.icons8.com/color/25/000000/123.png"/>
 - pics: contains pictures of our report <img src="https://img.icons8.com/emoji/25/000000/paintbrush-emoji.png"/>

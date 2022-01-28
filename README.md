@@ -46,14 +46,5 @@ Our method, Banana-TAD, seeks to help solve this challenge by the re-implementat
 ## Explanatory diagram of pipeline 
  ![classdiag_SA1](https://user-images.githubusercontent.com/44814359/151630467-5e9d1c63-66f3-4294-b2e6-4f15aef51cac.svg)
 
-## Sections and folders
-The respective folders for this GitHub are:
-- Data: contains all the HiC raw datas for the different types of cells we studied at different resolutions, plus already detected TADs from the Arrow-Head method. <img src="https://img.icons8.com/color/25/000000/123.png"/>
-- pics: contains pictures of our report <img src="https://img.icons8.com/emoji/25/000000/paintbrush-emoji.png"/>
-- Results: contains illustrations of our work. <img src="https://img.icons8.com/external-vitaliy-gorbachev-lineal-color-vitaly-gorbachev/25/000000/external-painting-museum-vitaliy-gorbachev-lineal-color-vitaly-gorbachev.png"/>
-  - TADs_length_analysis: contains histograms of distribution of TAD lengths, and fitting curves for this metric.
-  - ADD FUTUR RESULT FOLDERS HERE
-- src: contains the different python scripts that are used for our project.<img src="https://img.icons8.com/color/25/000000/property-script.png"/>
-
 ## Credit
 Icons embedded from [icons8](https://icons8.com/), all rights belonging to their respective owners.
